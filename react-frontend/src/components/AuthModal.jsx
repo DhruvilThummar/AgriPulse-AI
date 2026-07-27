@@ -187,24 +187,32 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
           /* Login / Sign Up with tab switcher */
           <>
             {/* Tab toggle */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '4px', 
+              marginBottom: '24px', 
+              background: 'rgba(1, 45, 29, 0.05)', 
+              padding: '4px', 
+              borderRadius: '8px',
+              border: '1px solid rgba(1, 45, 29, 0.08)'
+            }}>
               {['login', 'signup'].map(v => (
                 <button
                   key={v}
                   onClick={() => switchView(v)}
                   style={{
                     flex: 1,
-                    padding: '8px',
-                    border: view === v ? '1px solid var(--clr-outline-variant)' : '1px solid transparent',
+                    padding: '8px 12px',
+                    border: 'none',
                     borderRadius: '6px',
-                    background: view === v ? 'var(--clr-surface-container-lowest)' : 'transparent',
-                    color: view === v ? 'var(--clr-on-surface)' : 'var(--clr-on-surface-variant)',
-                    fontWeight: view === v ? 600 : 400,
-                    fontSize: '14px',
+                    background: view === v ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+                    color: view === v ? 'var(--clr-primary)' : 'var(--clr-on-surface-variant)',
+                    fontWeight: view === v ? 700 : 500,
+                    fontSize: '13px',
                     cursor: 'pointer',
-                    boxShadow: view === v ? 'var(--shadow-level-1)' : 'none',
+                    boxShadow: view === v ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                     fontFamily: 'var(--font-sans)',
-                    transition: 'all 0.15s',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
                   {v === 'login' ? 'Sign In' : 'Sign Up'}
