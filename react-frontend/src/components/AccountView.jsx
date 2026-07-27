@@ -30,14 +30,18 @@ export default function AccountView({ user, onLogout }) {
             marginBottom: '16px',
             boxShadow: 'var(--shadow-level-2)'
           }}>
-            {user?.email?.[0]?.toUpperCase() || 'U'}
+            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
           </div>
-          <h3 style={{ margin: '0 0 4px 0' }}>{user?.username || 'Trader Member'}</h3>
+          <h3 style={{ margin: '0 0 4px 0' }}>{user?.name || 'Trader Member'}</h3>
           <span style={{ fontSize: '11px', color: 'var(--clr-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Ensemble Access Active
           </span>
           
           <div style={{ width: '100%', borderTop: '1px solid var(--clr-outline-variant)', margin: '20px 0', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', textAlign: 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Full Name:</span>
+              <strong style={{ color: 'var(--clr-on-surface)' }}>{user?.name || 'N/A'}</strong>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--clr-on-surface-variant)' }}>Email Address:</span>
               <strong style={{ color: 'var(--clr-on-surface)' }}>{user?.email || 'N/A'}</strong>

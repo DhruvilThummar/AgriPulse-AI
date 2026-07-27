@@ -30,6 +30,13 @@ const mongoose = require('mongoose');
  */
 const UserSchema = new mongoose.Schema({
 
+  // name: The user's full name (optional, trimmed)
+  name: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
   // email: The user's email address — used as their unique login identifier.
   // unique: true → Two users cannot have the same email (enforced by MongoDB index).
   // lowercase: true → "User@Example.COM" is stored as "user@example.com" (normalized).

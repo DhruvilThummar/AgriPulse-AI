@@ -333,11 +333,12 @@ Implemented in [`scraper.py`](django-predict-service/model/scraper.py):
 ### Authentication Endpoints
 
 #### `POST /api/auth/signup`
-Registers a new user, hashes password, creates unverified user record, and sends 6-digit OTP via email.
+Registers a new user, hashes password, creates unverified user record with full name, and sends a personalized 6-digit OTP via email.
 
 - **Request Body**:
 ```json
 {
+  "name": "Dhruvil Thummar",
   "email": "farmer@agripulse.ai",
   "password": "SecurePassword123"
 }
@@ -555,11 +556,12 @@ Returns public aggregated platform metrics.
 ### Subscription Endpoints
 
 #### `POST /api/subscribe` 🌐 Public
-Subscribes an email to volatility alerts and dispatches confirmation HTML email.
+Subscribes an email to volatility alerts and dispatches a personalized HTML confirmation email.
 
 - **Request Body**:
 ```json
 {
+  "name": "Dhruvil Thummar",
   "email": "subscriber@example.com"
 }
 ```
@@ -619,10 +621,11 @@ Returns live dynamically scraped crop benchmark definitions directly from Python
 MongoDB is used for persistence via Mongoose. The database name is `agripulse`.
 
 ### 1. `User` Schema ([`User.js`](node-auth-backend/src/models/User.js))
-Stores user credentials and verification status.
+Stores user credentials, full name, and verification status.
 
 ```javascript
 {
+  name: { type: String, trim: true, default: '' },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   isVerified: { type: Boolean, default: false },

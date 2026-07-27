@@ -51,10 +51,10 @@ const { sendOtpEmail } = require('../config/nodemailer');
 //   4. Generates a 6-digit OTP and sends it to the user's email.
 // ════════════════════════════════════════════════════════════
 router.post('/signup', async (req, res) => {
-  // Extract email and password from the request body (sent as JSON)
-  const { email, password } = req.body;
+  // Extract name, email and password from the request body (sent as JSON)
+  const { name, email, password } = req.body;
 
-  // Basic validation: both fields are required
+  // Basic validation: email and password are required
   if (!email || !password) {
     return res.status(400).json({ error: 'Please provide both email and password' });
   }
@@ -80,6 +80,7 @@ router.post('/signup', async (req, res) => {
     // ── Create and save the new User document ──
     // new User({...}): Creates a new MongoDB document in memory (not saved yet)
     const newUser = new User({
+      name: name ? name.trim() : '',
       email,
       password: hashedPassword,  // Only the hash is stored — never plain text
       isVerified: false           // Account starts as unverified until OTP is confirmed
@@ -97,9 +98,9 @@ router.post('/signup', async (req, res) => {
     const newOtp = new Otp({ email, otpCode, expiresAt });
     await newOtp.save();
 
-    // ── Send OTP via email ──
+    // ── Send OTP via email with user's name ──
     // sendOtpEmail(): Defined in config/nodemailer.js — uses Nodemailer to send the email
-    await sendOtpEmail(email, otpCode);
+    await sendOtpEmail(email, otpCode, name || '');
 
     // 201 Created: Standard HTTP status for "resource was created successfully"
     return res.status(201).json({ message: 'User registered. OTP sent to your email.' });
@@ -203,7 +204,7 @@ router.post('/login', async (req, res) => {
 
       const newOtp = new Otp({ email, otpCode, expiresAt });
       await newOtp.save();
-      await sendOtpEmail(email, otpCode);  // Send the new OTP via email
+      await sendOtpEmail(email, otpCode, user.name || '');  // Send the new OTP via email with user's name
 
       // 403 Forbidden: User exists but is not allowed in yet (unverified)
       return res.status(403).json({
@@ -218,11 +219,11 @@ router.post('/login', async (req, res) => {
     const jwtSecret = process.env.JWT_SECRET || 'super_secret_jwt_key_agripulse_ai';
 
     // jwt.sign(payload, secret, options):
-    //   payload    → Data encoded inside the token (user ID and email)
+    //   payload    → Data encoded inside the token (user ID, name and email)
     //   secret     → Used to sign (cryptographically validate) the token
     //   expiresIn  → How long the token is valid ('7d' = 7 days)
     const token = jwt.sign(
-      { id: user._id, email: user.email },  // Token payload (decoded by authMiddleware on each request)
+      { id: user._id, name: user.name || '', email: user.email },  // Token payload (decoded by authMiddleware on each request)
       jwtSecret,
       { expiresIn: '7d' }                   // Token expires after 7 days
     );
@@ -233,6 +234,7 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user._id,
+        name: user.name || user.email.split('@')[0],
         email: user.email,
         isVerified: user.isVerified
       }

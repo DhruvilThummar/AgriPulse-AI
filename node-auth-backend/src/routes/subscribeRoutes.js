@@ -77,46 +77,53 @@ const createTransporter = async () => {
 //   previewUrl is only populated when using Ethereal test transport.
 // ════════════════════════════════════════════════════════════
 router.post('/', async (req, res) => {
-  // Extract the email from the JSON request body
-  const { email } = req.body;
+  // Extract the name and email from the JSON request body
+  const { name, email } = req.body;
 
   // Validate: email must be provided
   if (!email) {
     return res.status(400).json({ error: 'Email address is required' });
   }
 
+  // Format recipient display name
+  const recipientName = name ? name.trim() : email.split('@')[0];
+
   try {
     // Create a fresh transporter (real SMTP or Ethereal test depending on .env)
     const transporter = await createTransporter();
 
+    // Format sender name and address
+    const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_USER || 'alerts@agripulse.ai';
+    const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriPulse AI" <${fromAddress}>`;
+
     // ── Build the Confirmation Email ──
     const mailOptions = {
-      // from: The sender label and email shown in the recipient's inbox
-      from: '"AgriPulse AI Intelligence" <alerts@agripulse.ai>',
+      // from: The sender label "AgriPulse AI" and email shown in recipient's inbox
+      from: formattedFrom,
 
       // to: The subscriber's email address
       to: email,
 
       // subject: Email subject line (shown in inbox preview)
-      subject: '🌾 Welcome to AgriPulse AI Mandi Volatility Alerts',
+      subject: `🌾 Welcome ${recipientName} to AgriPulse AI Mandi Volatility Alerts`,
 
       // html: The email body as styled HTML.
-      // Uses a template literal to embed the subscriber's email dynamically.
+      // Uses a template literal to embed the subscriber's name and email dynamically.
       html: `
         <div style="font-family: Arial, sans-serif; padding: 24px; color: #191c1d; background-color: #f8f9fa;">
           <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 32px; border: 1px solid #c1c8c2; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
               <h2 style="color: #012d1d; margin: 0; font-size: 22px;">🌾 AgriPulse AI Intelligence</h2>
             </div>
-            <h3 style="color: #2c694e; margin-top: 0;">Subscription Confirmed!</h3>
+            <h3 style="color: #2c694e; margin-top: 0;">Welcome, ${recipientName}!</h3>
             <p style="font-size: 14px; line-height: 1.6; color: #414844;">
               Thank you for subscribing to <strong>AgriPulse AI Volatility &amp; Mandi Rate Alerts</strong>.
             </p>
             <p style="font-size: 14px; line-height: 1.6; color: #414844;">
               You will now receive daily AI price trend summaries, satellite telemetry crop health alerts, and real-time APMC Mandi exchange notifications.
             </p>
-            <div style="background-color: #f3f4f5; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 12px; font-family: monospace; color: #012d1d;">
-              <div>• Status: Subscribed (${email})</div>
+            <div style="background-color: #f3f4f3; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 12px; font-family: monospace; color: #012d1d;">
+              <div>• Subscriber: ${recipientName} (${email})</div>
               <div>• Alert Frequency: Real-Time / Daily Digest</div>
               <div>• ML Models Active: CatBoost + Logistic Regression Ensemble</div>
             </div>

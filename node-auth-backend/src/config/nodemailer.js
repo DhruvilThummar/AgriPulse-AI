@@ -63,24 +63,32 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
  * PARAMETERS:
  *   email   → The recipient's email address (where the OTP will be sent)
  *   otpCode → The 6-digit verification code to include in the email
+ *   name    → Optional recipient name for personalized greeting
  * RETURNS: { success: true } on success, { success: false, error: '...' } on failure
  */
-const sendOtpEmail = async (email, otpCode) => {
+const sendOtpEmail = async (email, otpCode, name = '') => {
+
+  // Format recipient display name
+  const displayName = name ? name.trim() : email.split('@')[0];
+
+  // Format sender name and email
+  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@agripulse.ai';
+  const formattedFrom = fromEmail.includes('<') ? fromEmail : `"AgriPulse AI" <${fromEmail}>`;
 
   // ── Build the Email Content ──
   // mailOptions: The full configuration for the email to be sent.
   const mailOptions = {
-    // from: The sender name and email address shown in the recipient's inbox
-    from: process.env.SMTP_FROM || 'noreply@agripulse.ai',
+    // from: The sender name "AgriPulse AI" and email address shown in the recipient's inbox
+    from: formattedFrom,
 
     // to: The recipient's email address (the user who just registered)
     to: email,
 
     // subject: The subject line of the email
-    subject: 'AgriPulse AI — Verify Your Email Address',
+    subject: `AgriPulse AI — Verification Code for ${displayName}`,
 
     // html: The email body as HTML markup.
-    // Using a template literal (`...`) so we can embed the otpCode variable directly.
+    // Using a template literal (`...`) so we can embed the otpCode and displayName variables directly.
     // The styling is inline CSS — email clients don't support external CSS files.
     html: `
       <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #f1f5f9; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);">
@@ -88,7 +96,7 @@ const sendOtpEmail = async (email, otpCode) => {
           <h2 style="color: #059669; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">AgriPulse AI</h2>
           <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Smarter Commodity Trading</p>
         </div>
-        <p style="color: #334155; font-size: 16px; line-height: 1.5;">Hello,</p>
+        <p style="color: #334155; font-size: 16px; line-height: 1.5; font-weight: 600;">Hello ${displayName},</p>
         <p style="color: #334155; font-size: 16px; line-height: 1.5;">Thank you for signing up for AgriPulse AI. Please use the following 6-digit One-Time Password (OTP) to verify your account. This code is valid for 5 minutes.</p>
         <div style="font-size: 32px; font-weight: 800; text-align: center; margin: 36px 0; color: #0f172a; letter-spacing: 8px; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
           ${otpCode}

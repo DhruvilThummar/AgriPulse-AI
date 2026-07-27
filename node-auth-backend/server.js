@@ -128,6 +128,7 @@ const seedDefaultUser = async () => {
 
       // Create a new User document (MongoDB record) with the hashed password
       const seededUser = new User({
+        name: 'Dhruvil Thummar',
         email: defaultEmail,
         password: hashedPassword,
         isVerified: true  // Pre-verified so they can log in immediately without OTP

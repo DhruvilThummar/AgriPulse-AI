@@ -18,6 +18,7 @@ const PASSWORD_RULES = [
 
 export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   const [view,     setView]     = useState('login'); // 'login' | 'signup' | 'otp'
+  const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [otpCode,  setOtpCode]  = useState('');
@@ -69,7 +70,7 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
 
     setError(''); setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/auth/signup', { email, password });
+      await axios.post('http://localhost:5000/api/auth/signup', { name, email, password });
       showToast('OTP sent to your email', 'success');
       setView('otp');
     } catch (err) {
@@ -213,6 +214,21 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
               onSubmit={view === 'login' ? handleLoginSubmit : handleSignupSubmit}
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
+              {view === 'signup' && (
+                <div>
+                  <label htmlFor="signup-name" style={labelStyle}>Full Name</label>
+                  <input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Dhruvil Thummar"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    style={inputStyle}
+                    onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
+                    onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
+              )}
               <div>
                 <label htmlFor={`${view}-email`} style={labelStyle}>Email</label>
                 <input

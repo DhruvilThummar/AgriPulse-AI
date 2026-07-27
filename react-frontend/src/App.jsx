@@ -24,6 +24,7 @@ export default function App() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
+  const [subscribeName, setSubscribeName] = useState('');
   const [subscribeEmail, setSubscribeEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
 
@@ -36,12 +37,13 @@ export default function App() {
       const res = await fetch('http://localhost:5000/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: subscribeEmail })
+        body: JSON.stringify({ name: subscribeName, email: subscribeEmail })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast(`📧 Nodemailer sent confirmation email to ${subscribeEmail}!`, 'success');
+        showToast(`📧 Confirmation email sent to ${data.message.includes('sent to') ? subscribeEmail : 'your email'}!`, 'success');
         setSubscribeEmail('');
+        setSubscribeName('');
       } else {
         showToast(data.error || 'Subscription failed', 'error');
       }
@@ -49,6 +51,7 @@ export default function App() {
       console.error('Subscription error:', err);
       showToast(`📧 Nodemailer email dispatched to ${subscribeEmail}!`, 'success');
       setSubscribeEmail('');
+      setSubscribeName('');
     } finally {
       setSubscribing(false);
     }
@@ -364,13 +367,12 @@ export default function App() {
                 <p style={{ fontSize: '11px', lineHeight: '1.4', margin: '0 0 10px 0' }}>
                   Get automated daily AI price trend summaries delivered to your inbox.
                 </p>
-                <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: '4px' }}>
+                <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={subscribeEmail}
-                    onChange={e => setSubscribeEmail(e.target.value)}
-                    required
+                    type="text"
+                    placeholder="Your Name (e.g. Dhruvil)"
+                    value={subscribeName}
+                    onChange={e => setSubscribeName(e.target.value)}
                     disabled={subscribing}
                     style={{
                       padding: '6px 10px',
@@ -378,17 +380,35 @@ export default function App() {
                       border: '1px solid var(--clr-outline-variant)',
                       background: 'var(--clr-surface-container-lowest)',
                       fontSize: '11px',
-                      flex: 1,
                       outline: 'none'
                     }}
                   />
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={subscribing} style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {subscribing ? (
-                      <><div className="spinner" style={{ width: '10px', height: '10px' }} /> Sending...</>
-                    ) : (
-                      <><span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span> Join</>
-                    )}
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={subscribeEmail}
+                      onChange={e => setSubscribeEmail(e.target.value)}
+                      required
+                      disabled={subscribing}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--clr-outline-variant)',
+                        background: 'var(--clr-surface-container-lowest)',
+                        fontSize: '11px',
+                        flex: 1,
+                        outline: 'none'
+                      }}
+                    />
+                    <button type="submit" className="btn btn-primary btn-sm" disabled={subscribing} style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {subscribing ? (
+                        <><div className="spinner" style={{ width: '10px', height: '10px' }} /> Sending...</>
+                      ) : (
+                        <><span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span> Join</>
+                      )}
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
