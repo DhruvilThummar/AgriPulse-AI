@@ -196,6 +196,7 @@ export default function OrdersView({ showToast }) {
   ]);
 
   const [cashReserves, setCashReserves] = useState(2103280);
+  const [storageLimit, setStorageLimit] = useState(400);
   const activeToken = localStorage.getItem('agripulse_token');
 
   // Fetch persistent user inventory from database
@@ -211,6 +212,9 @@ export default function OrdersView({ showToast }) {
         if (response.data.cashReserves !== undefined) {
           setCashReserves(response.data.cashReserves);
         }
+        if (response.data.storageLimit !== undefined) {
+          setStorageLimit(response.data.storageLimit);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch user inventory:', error);
@@ -218,11 +222,12 @@ export default function OrdersView({ showToast }) {
   };
 
   // Sync inventory & cash updates to DB
-  const saveInventoryToDb = async (newInventory, newCash) => {
+  const saveInventoryToDb = async (newInventory, newCash, newLimit) => {
     try {
       await axios.post('http://localhost:5000/api/inventory/adjust', {
         inventory: newInventory,
-        cashReserves: newCash
+        cashReserves: newCash,
+        storageLimit: newLimit !== undefined ? newLimit : storageLimit
       }, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
@@ -251,8 +256,15 @@ export default function OrdersView({ showToast }) {
     if (activeToken) {
       fetchUserInventory();
     }
+    const handleUpdated = () => {
+      fetchUserInventory();
+    };
+    window.addEventListener('inventoryUpdated', handleUpdated);
     const interval = setInterval(fetchCommodityPrices, 8000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('inventoryUpdated', handleUpdated);
+    };
   }, [activeToken]);
 
   // Fetch real ML predictions for inventory crops
@@ -607,7 +619,7 @@ export default function OrdersView({ showToast }) {
     return list;
   }, [processedInventory, filter, search]);
 
-  const holdingCapacityPct = Math.min(100, Math.round((totalTonnage / 400) * 100));
+  const holdingCapacityPct = Math.min(100, Math.round((totalTonnage / storageLimit) * 100));
 
   // Risk Pre-take simulator computations
   const simulatorPreview = useMemo(() => {
@@ -633,7 +645,7 @@ export default function OrdersView({ showToast }) {
 
     const cost = qNum * pNum * 10;
     const potentialStorageDecayVal = cost * itemRisk.decayCoeff;
-    const isCapacityExceeded = totalNewTonnage > 400;
+    const isCapacityExceeded = totalNewTonnage > storageLimit;
 
     return {
       cost,
@@ -737,10 +749,10 @@ export default function OrdersView({ showToast }) {
           },
           {
             label: 'Holding Tonnage',
-            value: `${totalTonnage} / 400 Tons`,
+            value: `${totalTonnage} / ${storageLimit} Tons`,
             icon: 'scale',
             bg: 'var(--clr-secondary)',
-            desc: "Total weight of stored crops relative to the warehouse facility's max holding capacity (400 Tons limit)."
+            desc: `Total weight of stored crops relative to the warehouse facility's max holding capacity (${storageLimit} Tons limit).`
           },
           {
             label: 'Average Risk Score',

@@ -364,7 +364,7 @@ export default function App() {
                 } />
                 <Route path="/account" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <AccountView user={user} onLogout={handleLogout} />
+                    <AccountView user={user} onLogout={handleLogout} showToast={showToast} />
                   </ProtectedRoute>
                 } />
 

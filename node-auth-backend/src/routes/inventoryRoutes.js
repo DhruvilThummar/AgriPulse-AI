@@ -15,7 +15,8 @@ router.get('/', authMiddleware, async (req, res) => {
     return res.json({
       success: true,
       inventory: user.inventory || [],
-      cashReserves: user.cashReserves !== undefined ? user.cashReserves : 2103280
+      cashReserves: user.cashReserves !== undefined ? user.cashReserves : 2103280,
+      storageLimit: user.storageLimit !== undefined ? user.storageLimit : 400
     });
   } catch (error) {
     console.error('Fetch inventory error:', error);
@@ -26,7 +27,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // POST /api/inventory/adjust - Persist new inventory array and cash reserves
 router.post('/adjust', authMiddleware, async (req, res) => {
   try {
-    const { inventory, cashReserves } = req.body;
+    const { inventory, cashReserves, storageLimit } = req.body;
     
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -35,6 +36,7 @@ router.post('/adjust', authMiddleware, async (req, res) => {
 
     if (inventory !== undefined) user.inventory = inventory;
     if (cashReserves !== undefined) user.cashReserves = cashReserves;
+    if (storageLimit !== undefined) user.storageLimit = storageLimit;
 
     await user.save();
 
@@ -42,7 +44,8 @@ router.post('/adjust', authMiddleware, async (req, res) => {
       success: true,
       message: 'Inventory persisted successfully',
       inventory: user.inventory,
-      cashReserves: user.cashReserves
+      cashReserves: user.cashReserves,
+      storageLimit: user.storageLimit
     });
   } catch (error) {
     console.error('Adjust inventory error:', error);

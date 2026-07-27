@@ -1,7 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-export default function AccountView({ user, onLogout }) {
+export default function AccountView({ user, onLogout, showToast }) {
   const joinDate = '2026-07-01';
+
+  // Stats edit states
+  const [cash, setCash] = useState(2103280);
+  const [limit, setLimit] = useState(400);
+  const [saving, setSaving] = useState(false);
+
+  const activeToken = localStorage.getItem('agripulse_token') || sessionStorage.getItem('agripulse_token');
+
+  // Fetch current persistent inventory details
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/inventory', {
+          headers: { Authorization: `Bearer ${activeToken}` }
+        });
+        if (response.data && response.data.success) {
+          if (response.data.cashReserves !== undefined) {
+            setCash(response.data.cashReserves);
+          }
+          if (response.data.storageLimit !== undefined) {
+            setLimit(response.data.storageLimit);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats in AccountView:', err);
+      }
+    };
+    if (activeToken) {
+      fetchData();
+    }
+  }, [activeToken]);
+
+  // Handle saving new cash reserves & storage limit to DB
+  const handleSaveStats = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/inventory/adjust', {
+        cashReserves: Number(cash),
+        storageLimit: Number(limit)
+      }, {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+      if (response.data && response.data.success) {
+        if (showToast) showToast('Regional stats updated successfully!', 'success');
+        // Dispatch custom event to notify other views (e.g. OrdersView) to refresh
+        window.dispatchEvent(new Event('inventoryUpdated'));
+      }
+    } catch (err) {
+      console.error('Failed to update stats:', err);
+      if (showToast) showToast('Failed to update regional stats', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="animate-fade-up" id="account-view">
@@ -62,15 +118,61 @@ export default function AccountView({ user, onLogout }) {
           </button>
         </div>
 
-        {/* Security & Access Logs */}
+        {/* Security & Config Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Editable Stats Section */}
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 style={{ margin: '0 0 16px 0' }}>Configure Regional Terminal Stats</h3>
+            <p className="subtitle" style={{ marginBottom: '16px' }}>Manage the regional storage limits and baseline cash reserves directly synced to your account database.</p>
+            
+            <form onSubmit={handleSaveStats} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="cash-reserves-input">Cash Reserves (₹ INR)</label>
+                <input
+                  id="cash-reserves-input"
+                  type="number"
+                  className="form-input"
+                  value={cash}
+                  onChange={(e) => setCash(e.target.value)}
+                  placeholder="e.g. 2103280"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="storage-limit-input">Warehouse Storage Capacity Limit (Tons)</label>
+                <input
+                  id="storage-limit-input"
+                  type="number"
+                  className="form-input"
+                  value={limit}
+                  onChange={(e) => setLimit(e.target.value)}
+                  placeholder="e.g. 400"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving}
+                style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}
+              >
+                <span className="material-symbols-outlined">{saving ? 'sync' : 'save'}</span>
+                {saving ? 'Saving Config...' : 'Update Regional Config'}
+              </button>
+            </form>
+          </div>
+
+          {/* Security Privileges */}
           <div className="card" style={{ padding: '24px' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Security Privileges & Limits</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {[
                 { title: "Dual ML Prediction Access", status: "ENABLED", desc: "Access to run real-time CatBoost + Logistic Regression inferences." },
                 { title: "IoT Satellite Re-sync Channel", status: "ENABLED", desc: "Secured uplink to Sentinel-2 satellite recon nodes." },
-                { title: "Storage Terminal Capacity Limit", status: "400 Tons Maximum", desc: "Safety holding volume threshold defined for your regional warehouse." }
+                { title: "Storage Terminal Capacity Limit", status: `${limit} Tons Maximum`, desc: "Safety holding volume threshold defined for your regional warehouse." }
               ].map((item, idx) => (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', borderBottom: '1px solid var(--clr-outline-variant)', paddingBottom: '12px' }}>
                   <div style={{ flex: 1, marginRight: '16px' }}>

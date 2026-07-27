@@ -115,6 +115,17 @@ class AgriPulseMLPredictor:
         scraped_spot = float(scraped_data.get("scraped_spot_price", previous_price))
         hist_7d_avg  = float(scraped_data.get("historical_7d_avg", previous_price))
 
+        # Check if scraped price is the static default base reference (meaning web scraping failed/was skipped)
+        # and align it with previous_price to prevent false momentum bias
+        try:
+            from .scraper import CommodityWebScraper
+            config = CommodityWebScraper.get_crop_config(scraped_data.get("crop", "wheat"))
+            if scraped_spot == float(config.get("base_ref", 0)) and float(scraped_data.get("scraped_change_pct", 0.0)) == 0.0:
+                scraped_spot = float(previous_price)
+                hist_7d_avg = float(previous_price)
+        except Exception:
+            pass
+
         # Calculated momentum feature
         spot_momentum = (scraped_spot - previous_price) / max(1.0, previous_price)
 
@@ -184,14 +195,14 @@ class AgriPulseMLPredictor:
         # ── FALLBACK MATHEMATICAL ENSEMBLE ENGINE ──
         historical_diff = (scraped_spot - hist_7d_avg) / max(1.0, hist_7d_avg)
         demand_weight = (market_demand_score - 5.0) * 0.38
-        supply_pressure = -((supply_volume - 100.0) / 200.0) * 0.28
+        supply_pressure = -((supply_volume - 150.0) / 150.0) * 0.28
         freight_penalty = -((transport_cost_index - 100.0) / 100.0) * 0.14
         momentum_score = (spot_momentum * 2.5) + (historical_diff * 1.5)
 
-        lr_logit = 0.15 + demand_weight + supply_pressure + freight_penalty + momentum_score
+        lr_logit = demand_weight + supply_pressure + freight_penalty + momentum_score
         lr_prob_up = 1.0 / (1.0 + math.exp(-lr_logit))
 
-        tree_score = 0.20 + (market_demand_score * 0.08) - (supply_volume * 0.001) + (spot_momentum * 2.2)
+        tree_score = (market_demand_score - 5.0) * 0.15 - ((supply_volume - 150.0) / 150.0) * 0.10 + (spot_momentum * 2.2)
         cb_prob_up = 1.0 / (1.0 + math.exp(-tree_score))
 
         ensemble_prob_up = (lr_prob_up + cb_prob_up) / 2.0

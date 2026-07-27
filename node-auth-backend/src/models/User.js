@@ -87,6 +87,12 @@ const UserSchema = new mongoose.Schema({
   cashReserves: {
     type: Number,
     default: 2103280
+  },
+
+  // storageLimit: User regional storage limit in Tons
+  storageLimit: {
+    type: Number,
+    default: 400
   }
 
 }, {
