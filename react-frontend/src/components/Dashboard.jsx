@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 
 const CROP_OPTIONS = [
@@ -64,6 +64,11 @@ export default function Dashboard({ token, showToast }) {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [commodities, setCommodities] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [historyFilter]);
 
   const activeToken = token || localStorage.getItem('agripulse_token');
 
@@ -116,6 +121,14 @@ export default function Dashboard({ token, showToast }) {
     if (historyFilter === 'all') return true;
     return item.crop === historyFilter;
   });
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+
+  const paginatedHistory = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredHistory.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredHistory, currentPage]);
 
   // Fetch live scraped commodities to get current market rates
   const fetchCommodities = async () => {
@@ -916,7 +929,7 @@ export default function Dashboard({ token, showToast }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredHistory.map((item, idx) => (
+                {paginatedHistory.map((item, idx) => (
                   <tr key={item._id || idx}>
                     <td style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--clr-on-surface-variant)' }}>
                       {new Date(item.createdAt).toLocaleDateString('en-IN', {
@@ -963,6 +976,63 @@ export default function Dashboard({ token, showToast }) {
                 ))}
               </tbody>
             </table>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 24px',
+                borderTop: '1px solid var(--clr-outline-variant)',
+                background: 'var(--clr-surface-bright)',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}>
+                <div style={{ fontSize: '12px', color: 'var(--clr-on-surface-variant)' }}>
+                  Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredHistory.length)} of {filteredHistory.length} records
+                </div>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    style={{ padding: '4px 8px', fontSize: '12px', display: 'flex', alignItems: 'center', minHeight: 'auto', height: 'auto' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', marginRight: '2px' }}>chevron_left</span>
+                    Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--clr-outline-variant)',
+                        background: currentPage === page ? 'var(--clr-primary)' : 'var(--clr-surface-container-lowest)',
+                        color: currentPage === page ? '#fff' : 'var(--clr-on-surface)',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    style={{ padding: '4px 8px', fontSize: '12px', display: 'flex', alignItems: 'center', minHeight: 'auto', height: 'auto' }}
+                  >
+                    Next
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', marginLeft: '2px' }}>chevron_right</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

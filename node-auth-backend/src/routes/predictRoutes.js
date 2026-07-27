@@ -206,8 +206,7 @@ router.get('/history', authMiddleware, async (req, res) => {
     // .sort({ createdAt: -1 }): Sort by creation time, newest first (-1 = descending)
     // .limit(20): Return at most 20 results (keeps response size manageable)
     const history = await Prediction.find({ user: req.user.id })
-      .sort({ createdAt: -1 })
-      .limit(20);
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, history });
 

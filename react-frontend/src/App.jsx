@@ -117,10 +117,17 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Load session from localStorage on mount
+  // Helper to read cookie values
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    if (match) return decodeURIComponent(match[2]);
+    return null;
+  };
+
+  // Load session from localStorage, sessionStorage, or cookies on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('agripulse_token');
-    const savedUser  = localStorage.getItem('agripulse_user');
+    const savedToken = localStorage.getItem('agripulse_token') || sessionStorage.getItem('agripulse_token') || getCookie('agripulse_token');
+    const savedUser  = localStorage.getItem('agripulse_user') || sessionStorage.getItem('agripulse_user') || getCookie('agripulse_user');
     if (savedToken && savedUser) {
       try {
         setToken(savedToken);
@@ -128,6 +135,10 @@ export default function App() {
       } catch (e) {
         localStorage.removeItem('agripulse_token');
         localStorage.removeItem('agripulse_user');
+        sessionStorage.removeItem('agripulse_token');
+        sessionStorage.removeItem('agripulse_user');
+        document.cookie = "agripulse_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "agripulse_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
     }
   }, []);
@@ -145,16 +156,38 @@ export default function App() {
   const handleAuthSuccess = (userData, userToken) => {
     setUser(userData);
     setToken(userToken);
+    
+    // Save to localStorage
     localStorage.setItem('agripulse_token', userToken);
     localStorage.setItem('agripulse_user', JSON.stringify(userData));
+
+    // Save to sessionStorage
+    sessionStorage.setItem('agripulse_token', userToken);
+    sessionStorage.setItem('agripulse_user', JSON.stringify(userData));
+
+    // Save to Cookie (7-day expiry)
+    document.cookie = `agripulse_token=${userToken}; path=/; max-age=${7*24*60*60}; SameSite=Lax`;
+    document.cookie = `agripulse_user=${encodeURIComponent(JSON.stringify(userData))}; path=/; max-age=${7*24*60*60}; SameSite=Lax`;
+
     navigate('/predictions');
   };
 
   const handleLogout = () => {
     setUser(null);
     setToken(null);
+    
+    // Clear localStorage
     localStorage.removeItem('agripulse_token');
     localStorage.removeItem('agripulse_user');
+
+    // Clear sessionStorage
+    sessionStorage.removeItem('agripulse_token');
+    sessionStorage.removeItem('agripulse_user');
+
+    // Clear cookies
+    document.cookie = "agripulse_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "agripulse_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
     showToast('Signed out successfully', 'success');
     navigate('/');
   };
