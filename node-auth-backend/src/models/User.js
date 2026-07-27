@@ -64,6 +64,29 @@ const UserSchema = new mongoose.Schema({
   isVerified: {
     type: Boolean,
     default: false  // By default, new accounts are created as unverified
+  },
+
+  // inventory: Stored user commodity stock holdings
+  inventory: [
+    {
+      crop: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      purchasePrice: { type: Number, required: true },
+      dateAdded: { type: String, default: () => new Date().toISOString().split('T')[0] },
+      facilityTerminal: { type: String, default: 'GJ-ColdStorage-1' },
+      qualityGrade: { type: String, default: 'Grade A' },
+      holdingHorizon: { type: String, default: '3 Months' },
+      targetSellPrice: { type: Number },
+      moisturePct: { type: Number, default: 9.5 },
+      insurancePolicy: { type: String, default: 'Comprehensive' },
+      procurementSource: { type: String, default: 'Direct APMC Mandi' }
+    }
+  ],
+
+  // cashReserves: User cash balance for procurement
+  cashReserves: {
+    type: Number,
+    default: 2103280
   }
 
 }, {

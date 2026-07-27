@@ -182,6 +182,7 @@ export default function OrdersView({ showToast }) {
     '[10:38:45 am] AI Core re-evaluated WHEAT: predicted tomorrow trend UP (86% confidence).'
   ]);
   const [tickerTick, setTickerTick] = useState(0);
+  const [activeTooltip, setActiveTooltip] = useState(null);
 
   // Quick Action States inside Table
   const [adjustQty, setAdjustQty] = useState({});
@@ -197,6 +198,40 @@ export default function OrdersView({ showToast }) {
   const [cashReserves, setCashReserves] = useState(2103280);
   const activeToken = localStorage.getItem('agripulse_token');
 
+  // Fetch persistent user inventory from database
+  const fetchUserInventory = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/inventory', {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+      if (response.data && response.data.success) {
+        if (response.data.inventory && response.data.inventory.length > 0) {
+          setInventory(response.data.inventory);
+        }
+        if (response.data.cashReserves !== undefined) {
+          setCashReserves(response.data.cashReserves);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user inventory:', error);
+    }
+  };
+
+  // Sync inventory & cash updates to DB
+  const saveInventoryToDb = async (newInventory, newCash) => {
+    try {
+      await axios.post('http://localhost:5000/api/inventory/adjust', {
+        inventory: newInventory,
+        cashReserves: newCash
+      }, {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+    } catch (error) {
+      console.error('Failed to persist inventory state to DB:', error);
+      if (showToast) showToast('Error syncing inventory state to database', 'error');
+    }
+  };
+
   // Fetch live commodity prices
   const fetchCommodityPrices = async () => {
     try {
@@ -207,16 +242,18 @@ export default function OrdersView({ showToast }) {
       setLoadingPrices(false);
     } catch (err) {
       console.error('Failed to fetch prices in inventory:', err);
-      // Fallback fallback simulated commodities if API unavailable
       setLoadingPrices(false);
     }
   };
 
   useEffect(() => {
     fetchCommodityPrices();
+    if (activeToken) {
+      fetchUserInventory();
+    }
     const interval = setInterval(fetchCommodityPrices, 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeToken]);
 
   // Fetch real ML predictions for inventory crops
   useEffect(() => {
@@ -322,6 +359,7 @@ export default function OrdersView({ showToast }) {
         return;
       }
 
+      let nextInv = [];
       setInventory(prev => {
         const index = prev.findIndex(item => item.crop === crop);
         if (index > -1) {
@@ -334,18 +372,23 @@ export default function OrdersView({ showToast }) {
             purchasePrice: Math.round(((oldQty * oldPrice) + (qNum * pNum)) / (oldQty + qNum)),
             dateAdded: new Date().toISOString().split('T')[0]
           };
+          nextInv = updated;
           return updated;
         } else {
-          return [...prev, {
+          nextInv = [...prev, {
             crop,
             quantity: qNum,
             purchasePrice: pNum,
             dateAdded: new Date().toISOString().split('T')[0]
           }];
+          return nextInv;
         }
       });
 
-      setCashReserves(prev => prev - cost);
+      const nextCash = cashReserves - cost;
+      setCashReserves(nextCash);
+      saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+
       showToast(`Added ${qNum} Tons of ${crop.toUpperCase()} stock successfully`, 'success');
       setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] USER ACTION: Added ${qNum} Tons of ${crop.toUpperCase()} @ ₹${pNum}/Qtl. Portfolio exposure re-weighted.`, ...prev]);
       setQuantity('');
@@ -373,6 +416,7 @@ export default function OrdersView({ showToast }) {
         return;
       }
 
+      let nextInv = [];
       setInventory(prev => {
         const index = prev.findIndex(item => item.crop === targetCrop);
         if (index > -1) {
@@ -384,12 +428,17 @@ export default function OrdersView({ showToast }) {
             quantity: oldQty + amount,
             purchasePrice: Math.round(((oldQty * oldPrice) + (amount * priceVal)) / (oldQty + amount))
           };
+          nextInv = updated;
           return updated;
         } else {
-          return [...prev, { crop: targetCrop, quantity: amount, purchasePrice: priceVal, dateAdded: new Date().toISOString().split('T')[0] }];
+          nextInv = [...prev, { crop: targetCrop, quantity: amount, purchasePrice: priceVal, dateAdded: new Date().toISOString().split('T')[0] }];
+          return nextInv;
         }
       });
-      setCashReserves(prev => prev - cost);
+      const nextCash = cashReserves - cost;
+      setCashReserves(nextCash);
+      saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+
       showToast(`Added ${amount} Tons of ${targetCrop.toUpperCase()} via Quick Adjustment.`, 'success');
       setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] Quick Adjust: Added ${amount} Tons of ${targetCrop.toUpperCase()}.`, ...prev]);
     } else {
@@ -404,14 +453,22 @@ export default function OrdersView({ showToast }) {
       const priceVal = liveItem ? Number(liveItem.price.replace(/[^\d]/g, '')) : matchedInv.purchasePrice;
       const credit = amount * priceVal * 10;
 
-      setInventory(prev => prev.map(item => {
-        if (item.crop === targetCrop) {
-          return { ...item, quantity: item.quantity - amount };
-        }
-        return item;
-      }).filter(item => item.quantity > 0));
+      let nextInv = [];
+      setInventory(prev => {
+        const res = prev.map(item => {
+          if (item.crop === targetCrop) {
+            return { ...item, quantity: item.quantity - amount };
+          }
+          return item;
+        }).filter(item => item.quantity > 0);
+        nextInv = res;
+        return res;
+      });
 
-      setCashReserves(prev => prev + credit);
+      const nextCash = cashReserves + credit;
+      setCashReserves(nextCash);
+      saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+
       showToast(`Removed/Sold ${amount} Tons of ${targetCrop.toUpperCase()}. Received ${fmtINR(credit)}.`, 'success');
       setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] Quick Adjust: Sold ${amount} Tons of ${targetCrop.toUpperCase()} at market rate.`, ...prev]);
     }
@@ -429,14 +486,22 @@ export default function OrdersView({ showToast }) {
     const currentPriceNumeric = liveItem ? Number(liveItem.price.replace(/[^\d]/g, '')) : matchedInv.purchasePrice;
     const recoveryAmt = actualLiquidate * currentPriceNumeric * 10;
 
-    setInventory(prev => prev.map(item => {
-      if (item.crop === targetCrop) {
-        return { ...item, quantity: Math.max(0, item.quantity - actualLiquidate) };
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
+    let nextInv = [];
+    setInventory(prev => {
+      const res = prev.map(item => {
+        if (item.crop === targetCrop) {
+          return { ...item, quantity: Math.max(0, item.quantity - actualLiquidate) };
+        }
+        return item;
+      }).filter(item => item.quantity > 0);
+      nextInv = res;
+      return res;
+    });
 
-    setCashReserves(prev => prev + recoveryAmt);
+    const nextCash = cashReserves + recoveryAmt;
+    setCashReserves(nextCash);
+    saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+
     showToast(`AI Suggested Liquidation Executed: Sold ${actualLiquidate} Tons of ${targetCrop.toUpperCase()}. Received ${fmtINR(recoveryAmt)}`, 'success');
     setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] AI EXECUTE: Liquidated ${actualLiquidate} Tons of ${targetCrop.toUpperCase()} based on risk decay parameters.`, ...prev]);
   };
@@ -663,12 +728,97 @@ export default function OrdersView({ showToast }) {
       {/* Quick Stats Grid */}
       <div style={styles.statsGrid} className="orders-stats-grid">
         {[
-          { label: 'Total Inventory Value', value: fmtINR(totalStockValue), icon: 'inventory_2', bg: 'var(--clr-primary)' },
-          { label: 'Holding Tonnage', value: `${totalTonnage} / 400 Tons`, icon: 'scale', bg: 'var(--clr-secondary)' },
-          { label: 'Average Risk Score', value: `${avgRiskPct}%`, icon: 'warning', bg: avgRiskPct > 60 ? 'var(--clr-error)' : '#ea580c' },
-          { label: 'Cash Reserves', value: fmtINR(cashReserves), icon: 'payments', bg: '#9333ea' }
+          {
+            label: 'Total Inventory Value',
+            value: fmtINR(totalStockValue),
+            icon: 'inventory_2',
+            bg: 'var(--clr-primary)',
+            desc: 'Combined value of all active stock holdings calculated dynamically using the latest live exchange spot rates and regional index offsets.'
+          },
+          {
+            label: 'Holding Tonnage',
+            value: `${totalTonnage} / 400 Tons`,
+            icon: 'scale',
+            bg: 'var(--clr-secondary)',
+            desc: "Total weight of stored crops relative to the warehouse facility's max holding capacity (400 Tons limit)."
+          },
+          {
+            label: 'Average Risk Score',
+            value: `${avgRiskPct}%`,
+            icon: 'warning',
+            bg: avgRiskPct > 60 ? 'var(--clr-error)' : '#ea580c',
+            desc: 'The overall portfolio risk coefficient determined by averaging the moisture, decay, and price volatility indices of active holdings.'
+          },
+          {
+            label: 'Cash Reserves',
+            value: fmtINR(cashReserves),
+            icon: 'payments',
+            bg: '#9333ea',
+            desc: 'Total available capital balance for commodity procurement. Balance decreases when adding stock and increases upon selling/liquidation.'
+          }
         ].map((s, i) => (
-          <div className="card" style={styles.statCard} key={i}>
+          <div className="card" style={{ ...styles.statCard, position: 'relative' }} key={i}>
+            {/* Info toggle button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveTooltip(activeTooltip === i ? null : i);
+              }}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--clr-outline)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2px',
+                borderRadius: '50%',
+                transition: 'background 0.2s',
+                zIndex: 5
+              }}
+              title="Click to view metric details"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>info</span>
+            </button>
+
+            {/* Premium glassmorphic tooltip details overlay */}
+            {activeTooltip === i && (
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: 'var(--clr-surface-container-high)',
+                backdropFilter: 'blur(10px)',
+                zIndex: 10,
+                padding: '12px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                borderRadius: '8px',
+                border: '1px solid var(--clr-outline-variant)',
+                boxShadow: 'var(--shadow-level-2)',
+                animation: 'fadeIn 0.2s ease'
+              }}>
+                <div style={{ fontSize: '11px', color: 'var(--clr-on-surface)', lineHeight: '1.4' }}>
+                  <strong>{s.label} Definition:</strong>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '10px', color: 'var(--clr-on-surface-variant)' }}>{s.desc}</p>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  style={{ alignSelf: 'flex-end', padding: '2px 8px', fontSize: '10px', minHeight: 'auto', height: 'auto', marginTop: '6px' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveTooltip(null);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            )}
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={styles.statIconWrap(s.bg)}>
                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>{s.icon}</span>
@@ -901,12 +1051,12 @@ export default function OrdersView({ showToast }) {
               paddingRight: '4px',
               cursor: 'pointer'
             }}>
-              {sortedRiskInventory.map((item, idx) => {
+              {sortedRiskInventory.map((item) => {
                 const isHighRisk = item.risk.pct > 60;
                 const decayAmount = Math.round(item.totalValue * item.risk.decayCoeff);
                 
                 return (
-                  <div key={idx} style={{
+                  <div key={item.crop} style={{
                     padding: '10px 12px',
                     borderRadius: '8px',
                     background: 'var(--clr-surface-container-low)',

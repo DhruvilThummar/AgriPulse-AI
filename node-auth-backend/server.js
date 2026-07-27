@@ -46,6 +46,7 @@ const authRoutes      = require('./src/routes/authRoutes');      // /api/auth �
 const commodityRoutes = require('./src/routes/commodityRoutes'); // /api/commodity-prices → live market prices
 const predictRoutes   = require('./src/routes/predictRoutes');   // /api/predict → ML prediction + history
 const subscribeRoutes = require('./src/routes/subscribeRoutes'); // /api/subscribe → newsletter subscriptions
+const inventoryRoutes = require('./src/routes/inventoryRoutes'); // /api/inventory → user stocks persistence
 
 // Create the Express application instance
 const app = express();
@@ -85,6 +86,9 @@ app.use('/api/auth', authRoutes);
 
 // Subscribe & Contact routes: handles POST /api/subscribe & POST /api/contact
 app.use(['/api/subscribe', '/api/contact'], subscribeRoutes);
+
+// Inventory routes: handles persistent user stock & cash reserves
+app.use('/api/inventory', inventoryRoutes);
 
 // ── HEALTH CHECK ENDPOINT ──
 // GET /health or GET /api/v1/health → returns BFF server status
