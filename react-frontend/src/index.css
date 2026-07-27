@@ -1079,3 +1079,39 @@ a:hover { color: var(--clr-primary); }
   }
 }
 
+/* ─── High Contrast System Preference Overrides ─── */
+body.high-contrast {
+  --clr-background: #000000;
+  --clr-surface: #0a0a0a;
+  --clr-surface-container-lowest: #000000;
+  --clr-surface-container-low: #0c0c0c;
+  --clr-surface-container: #141414;
+  --clr-surface-bright: #0f0f0f;
+  --clr-on-surface: #ffffff;
+  --clr-on-surface-variant: #e1e3e4;
+  --clr-outline: #ffffff;
+  --clr-outline-variant: #888888;
+  color: #ffffff;
+}
+
+body.high-contrast .card,
+body.high-contrast .modal-card {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+body.high-contrast input,
+body.high-contrast select,
+body.high-contrast textarea {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+body.high-contrast button.btn-secondary {
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+

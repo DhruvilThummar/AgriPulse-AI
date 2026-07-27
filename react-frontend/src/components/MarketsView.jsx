@@ -10,7 +10,7 @@ import axios from 'axios';
 // All available crop categories for filtering
 const CROP_CATEGORIES = ['All', 'Wheat', 'Rice', 'Corn', 'Cotton', 'Soybean', 'Sugarcane', 'Mustard', 'Groundnut', 'Turmeric', 'Chilli'];
 
-export default function MarketsView({ token }) {
+export default function MarketsView({ token, autoSync }) {
   const [search, setSearch] = useState('');
   const [selectedCrop, setSelectedCrop] = useState('All');
   const [commodities, setCommodities] = useState([]);
@@ -22,9 +22,14 @@ export default function MarketsView({ token }) {
   // Fetch commodity data on mount and auto-refresh every 8 seconds
   useEffect(() => {
     fetchCommodityPrices();
-    const interval = setInterval(fetchCommodityPrices, 8000);
-    return () => clearInterval(interval);
-  }, []);
+    let interval;
+    if (autoSync) {
+      interval = setInterval(fetchCommodityPrices, 8000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoSync]);
 
   // Track previous prices to determine changes for flash animation
   const fetchCommodityPrices = async () => {

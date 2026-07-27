@@ -144,7 +144,7 @@ const CROP_RISK_FACTORS = {
   chilli: { level: 'High', pct: 80, reason: 'Extremely high volatility due to export quality standards and seasonal weather disruptions in cultivation.', decayCoeff: 0.14 }
 };
 
-export default function OrdersView({ showToast }) {
+export default function OrdersView({ showToast, autoSync }) {
   const [crop, setCrop] = useState('wheat');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -260,12 +260,17 @@ export default function OrdersView({ showToast }) {
       fetchUserInventory();
     };
     window.addEventListener('inventoryUpdated', handleUpdated);
-    const interval = setInterval(fetchCommodityPrices, 8000);
+    
+    let interval;
+    if (autoSync) {
+      interval = setInterval(fetchCommodityPrices, 8000);
+    }
+    
     return () => {
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
       window.removeEventListener('inventoryUpdated', handleUpdated);
     };
-  }, [activeToken]);
+  }, [activeToken, autoSync]);
 
   // Fetch real ML predictions for inventory crops
   useEffect(() => {
@@ -314,6 +319,7 @@ export default function OrdersView({ showToast }) {
 
   // Continual prediction simulation loop
   useEffect(() => {
+    if (!autoSync) return;
     const predictorTimer = setInterval(() => {
       setTickerTick(prev => prev + 1);
 
@@ -335,7 +341,7 @@ export default function OrdersView({ showToast }) {
     }, 5000);
 
     return () => clearInterval(predictorTimer);
-  }, []);
+  }, [autoSync]);
 
   // Autofill purchase price when selected crop changes
   useEffect(() => {

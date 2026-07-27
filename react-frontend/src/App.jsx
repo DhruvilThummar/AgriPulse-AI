@@ -56,8 +56,11 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [autoSync, setAutoSync] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('agripulse_darkmode') === 'true');
+  const [autoSync, setAutoSync] = useState(() => {
+    const saved = localStorage.getItem('agripulse_autosync');
+    return saved !== null ? saved === 'true' : true;
+  });
   const [subscribeName, setSubscribeName] = useState('');
   const [subscribeEmail, setSubscribeEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
@@ -99,7 +102,23 @@ export default function App() {
   ]);
 
   // Push new live notification simulation periodically
+  // Sync Settings to LocalStorage & Document Element
   useEffect(() => {
+    localStorage.setItem('agripulse_darkmode', darkMode);
+    if (darkMode) {
+      document.body.classList.add('high-contrast');
+    } else {
+      document.body.classList.remove('high-contrast');
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('agripulse_autosync', autoSync);
+  }, [autoSync]);
+
+  // Push new live notification simulation periodically
+  useEffect(() => {
+    if (!autoSync) return;
     const crops = ['Wheat', 'Rice', 'Cotton', 'Corn', 'Soybean', 'Mustard', 'Sugarcane'];
     const interval = setInterval(() => {
       const crop = crops[Math.floor(Math.random() * crops.length)];
@@ -115,7 +134,7 @@ export default function App() {
       setNotifications(prev => [newAlert, ...prev.slice(0, 4)]);
     }, 20000);
     return () => clearInterval(interval);
-  }, []);
+  }, [autoSync]);
 
   // Helper to read cookie values
   const getCookie = (name) => {
@@ -244,6 +263,71 @@ export default function App() {
         headerNavItems={headerNavItems}
       />
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.45)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100000
+        }} onClick={() => setShowSettings(false)}>
+          <div style={{
+            width: '340px',
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(255, 255, 255, 0.35)',
+            borderRadius: '16px',
+            boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.25) 0px 0px 0px 1px inset',
+            padding: '24px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(1, 45, 29, 0.1)', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--clr-primary)' }}>System Preferences</h3>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--clr-on-surface-variant)', padding: '4px', borderRadius: '50%' }} onClick={() => setShowSettings(false)}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '13px' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.4)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--clr-on-surface)' }}>Auto-Sync Telemetry</span>
+                  <input type="checkbox" checked={autoSync} onChange={e => {
+                    setAutoSync(e.target.checked);
+                    showToast(`Auto-Sync ${e.target.checked ? 'Enabled' : 'Disabled'}`, 'success');
+                  }} style={{ cursor: 'pointer', accentColor: 'var(--clr-primary)', width: '16px', height: '16px' }} />
+                </div>
+                <span style={{ fontSize: '10px', color: 'var(--clr-on-surface-variant)', display: 'block', marginTop: '4px', lineHeight: '1.4' }}>
+                  Automatically pulls fresh satellite crop health scans and IoT sensor data.
+                </span>
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.4)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--clr-on-surface)' }}>High-Contrast Mode</span>
+                  <input type="checkbox" checked={darkMode} onChange={e => {
+                    setDarkMode(e.target.checked);
+                    showToast(`Contrast theme updated`, 'success');
+                  }} style={{ cursor: 'pointer', accentColor: 'var(--clr-primary)', width: '16px', height: '16px' }} />
+                </div>
+                <span style={{ fontSize: '10px', color: 'var(--clr-on-surface-variant)', display: 'block', marginTop: '4px', lineHeight: '1.4' }}>
+                  Improves readability of charts and tables in bright conditions.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Main app layout below header ── */}
       <div className="app-layout">
         {/* Sidebar */}
@@ -339,22 +423,22 @@ export default function App() {
                 {/* Protected Routes */}
                 <Route path="/predictions" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <Dashboard token={token} showToast={showToast} />
+                    <Dashboard token={token} showToast={showToast} autoSync={autoSync} />
                   </ProtectedRoute>
                 } />
                 <Route path="/markets" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <MarketsView token={token} />
+                    <MarketsView token={token} autoSync={autoSync} />
                   </ProtectedRoute>
                 } />
                 <Route path="/analytics" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <AnalyticsView showToast={showToast} />
+                    <AnalyticsView showToast={showToast} autoSync={autoSync} />
                   </ProtectedRoute>
                 } />
                 <Route path="/orders" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <OrdersView showToast={showToast} />
+                    <OrdersView showToast={showToast} autoSync={autoSync} />
                   </ProtectedRoute>
                 } />
                 <Route path="/help" element={

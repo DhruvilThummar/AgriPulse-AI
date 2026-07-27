@@ -191,66 +191,7 @@ export default function Header({
               </div>
             )}
 
-            {/* Settings Modal */}
-            {showSettings && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 100000
-              }} onClick={() => setShowSettings(false)}>
-                <div style={{
-                  width: '320px',
-                  background: 'var(--clr-surface-container-lowest)',
-                  border: '1px solid var(--clr-outline-variant)',
-                  borderRadius: '12px',
-                  boxShadow: 'var(--shadow-level-3)',
-                  padding: '20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px'
-                }} onClick={e => e.stopPropagation()}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--clr-outline-variant)', paddingBottom: '10px' }}>
-                    <h3 style={{ margin: 0, fontSize: '14px' }}>System Preferences</h3>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--clr-on-surface)' }} onClick={() => setShowSettings(false)}>
-                      <span className="material-symbols-outlined">close</span>
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600 }}>Auto-Sync Telemetry</span>
-                        <input type="checkbox" checked={autoSync} onChange={e => {
-                          if (setAutoSync) setAutoSync(e.target.checked);
-                          if (showToast) showToast(`Auto-Sync ${e.target.checked ? 'Enabled' : 'Disabled'}`, 'success');
-                        }} />
-                      </div>
-                      <span style={{ fontSize: '10px', color: 'var(--clr-outline)', display: 'block', marginTop: '2px', lineHeight: '1.3' }}>
-                        Automatically pulls fresh satellite crop health scans and IoT sensor data.
-                      </span>
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600 }}>High-Contrast Mode</span>
-                        <input type="checkbox" checked={darkMode} onChange={e => {
-                          if (setDarkMode) setDarkMode(e.target.checked);
-                          if (showToast) showToast(`Mode updated successfully`, 'success');
-                        }} />
-                      </div>
-                      <span style={{ fontSize: '10px', color: 'var(--clr-outline)', display: 'block', marginTop: '2px', lineHeight: '1.3' }}>
-                        Improves readability of charts and tables in bright conditions.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* User Dropdown */}
             {showUserDropdown && (

@@ -70,7 +70,7 @@ const calculateYieldsForNdvi = (ndvi) => {
   });
 };
 
-export default function AnalyticsView({ showToast }) {
+export default function AnalyticsView({ showToast, autoSync }) {
   const [selectedCrop, setSelectedCrop] = useState('corn');
   const [compareCrop, setCompareCrop] = useState('groundnut');
   const [timeRange, setTimeRange] = useState('1Y');
@@ -104,9 +104,9 @@ export default function AnalyticsView({ showToast }) {
 
     const fetchMlMetrics = async () => {
       try {
-        const analyticsRes = await predictService.getAnalytics();
-        if (analyticsRes && analyticsRes.pandas_analytics) {
-          setPandasAnalytics(analyticsRes.pandas_analytics);
+        const statsRes = await predictService.getFeatureStats();
+        if (statsRes && statsRes.stats) {
+          setPandasAnalytics(statsRes.stats);
         }
         const summaryRes = await predictService.getModelSummary();
         if (summaryRes && summaryRes.classification_metrics) {
@@ -119,9 +119,15 @@ export default function AnalyticsView({ showToast }) {
     
     fetchLivePrices();
     fetchMlMetrics();
-    const interval = setInterval(fetchLivePrices, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    let interval;
+    if (autoSync) {
+      interval = setInterval(fetchLivePrices, 10000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoSync]);
   
   // Sort states
   const [yields, setYields] = useState(() => calculateYieldsForNdvi(0.67));
