@@ -12,6 +12,20 @@ export const predictService = {
   },
 
   /**
+   * Get Pandas Data Analytics (Unit 1 & 10)
+   */
+  async getAnalytics() {
+    return apiClient('/predict/analytics', { method: 'GET' });
+  },
+
+  /**
+   * Get Scikit-Learn Model Summary & Metrics (Unit 3-5 & 10)
+   */
+  async getModelSummary() {
+    return apiClient('/predict/summary', { method: 'GET' });
+  },
+
+  /**
    * Get prediction history log
    */
   async getHistory() {

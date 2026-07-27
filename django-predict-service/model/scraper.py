@@ -20,17 +20,21 @@ import os
 import json
 
 # urllib.request: Python's built-in HTTP client for making web requests
-# Used instead of 'requests' library to avoid extra dependencies
 import urllib.request
 
 # re: Regular expressions library — used to find price numbers in HTML text
 import re
 
+# Try importing requests for HTTP requests (Unit 7)
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+
 
 # ── Try to import BeautifulSoup4 ──
-# BeautifulSoup4 (bs4): HTML/XML parser used to extract data from live web pages.
-# We wrap the import in try/except so the server doesn't crash even if bs4 is not installed.
-# If bs4 is not installed → BS4_AVAILABLE = False → we skip HTML DOM scraping.
+# BeautifulSoup4 (bs4): HTML/XML parser used to extract data from live web pages (Unit 7)
 try:
     from bs4 import BeautifulSoup
     BS4_AVAILABLE = True   # bs4 is installed and ready to use
@@ -106,141 +110,141 @@ class CommodityWebScraper:
     # ──────────────────────────────────────────────────────────
     @staticmethod
     def scrape_html_dom_price(url):
-        # Skip if BeautifulSoup is not installed or URL is empty
+        """
+        Unit 7: Web Scraping with BeautifulSoup & Requests.
+        Fetches web page HTML and uses BeautifulSoup .find() and .find_all()
+        with HTTP status code handling (200 OK, 404 Not Found, 500 Error).
+        """
         if not BS4_AVAILABLE or not url:
             return None
 
         try:
-            # Create an HTTP request with a browser-like User-Agent header
-            # Some websites block requests that don't look like a real browser
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
-            # Open the URL and download the HTML content (timeout=3.5 seconds max)
-            with urllib.request.urlopen(req, timeout=3.5) as resp:
-                # Decode the raw bytes into a Python string
-                html_data = resp.read().decode('utf-8', errors='ignore')
+            # 7.1 HTTP Request with Status Code Handling (200, 404, 500)
+            if REQUESTS_AVAILABLE:
+                resp = requests.get(url, headers=headers, timeout=3.5)
+                if resp.status_code == 404:
+                    print(f"⚠️ Scraping 404 Not Found: {url}")
+                    return None
+                elif resp.status_code == 500:
+                    print(f"⚠️ Scraping 500 Internal Server Error: {url}")
+                    return None
+                elif resp.status_code != 200:
+                    return None
+                html_data = resp.text
+            else:
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=3.5) as resp:
+                    if resp.status != 200:
+                        return None
+                    html_data = resp.read().decode('utf-8', errors='ignore')
 
-                # Parse the HTML string with BeautifulSoup using the built-in HTML parser
-                soup = BeautifulSoup(html_data, 'html.parser')
+            # 7.2 BeautifulSoup DOM Parsing & Element Extraction (find, find_all)
+            soup = BeautifulSoup(html_data, 'html.parser')
 
-                # Find all HTML elements (span, div, td) whose CSS class name contains
-                # 'price', 'last', 'quote', or 'rate' (case-insensitive)
-                # re.compile() creates a regex pattern for flexible class matching
-                elements = soup.find_all(['span', 'div', 'td'], class_=re.compile(r'(price|last|quote|rate)', re.I))
+            # Explicit check using find() for main container
+            main_container = soup.find(['main', 'body', 'div'], id=re.compile(r'(market|quote|content)', re.I)) or soup
 
-                # Loop through each matching element and try to extract a price number
-                for el in elements:
-                    # Get the visible text, strip whitespace, remove commas and ₹ symbol
-                    text = el.get_text().strip().replace(',', '').replace('₹', '')
+            # Use find_all() for matching price target elements
+            elements = main_container.find_all(['span', 'div', 'td'], class_=re.compile(r'(price|last|quote|rate)', re.I))
 
-                    # Use regex to find the first number (with optional decimal) in the text
-                    match = re.search(r'\d+(\.\d+)?', text)
+            for el in elements:
+                text = el.get_text().strip().replace(',', '').replace('₹', '')
+                match = re.search(r'\d+(\.\d+)?', text)
+                if match:
+                    num = float(match.group())
+                    if num > 10:
+                        return num
 
-                    if match:
-                        num = float(match.group())
-                        # Filter out tiny numbers — real commodity prices are always > 10
-                        if num > 10:
-                            return num  # Return the first valid price found
-
-        except Exception:
-            # If anything goes wrong (network error, parsing error, etc.) → silently return None
+        except Exception as err:
             pass
 
-        return None  # No price found
+        return None
 
-    # ──────────────────────────────────────────────────────────
-    # METHOD: scrape_commodity_data
-    # WHAT IT DOES: The main scraping method. Fetches live spot price,
-    #               percentage change, min/max trading bounds, and
-    #               7-day average price for the requested commodity.
-    # WHEN TO USE: Called in PredictView.post() before running the ML model.
-    # RETURNS: A dict with all live scraped data for this crop.
-    # EXAMPLE: scrape_commodity_data('wheat') → { scraped_spot_price: 2510, ... }
-    # ──────────────────────────────────────────────────────────
     @staticmethod
     def scrape_commodity_data(crop_name):
+        """
+        Unit 7: Main Commodity Web Scraper with API & DOM Integration.
+        """
         crop_key = str(crop_name).strip().lower()
-        config   = CommodityWebScraper.get_crop_config(crop_key)  # Get metadata
-        base_ref = config['base_ref']  # Fallback price if scraping fails
+        config   = CommodityWebScraper.get_crop_config(crop_key)
+        base_ref = config['base_ref']
 
-        # Start with baseline values — will be overwritten if scraping succeeds
         result = {
             "crop": crop_key,
             "name": config["name"],
             "code": config["code"],
-            "scraped_spot_price": base_ref,            # Will be updated with live price
-            "scraped_change_pct": 0.0,                 # % price change from previous close
-            # min/max bounds = ±28% of base price (reasonable trading band estimate)
+            "scraped_spot_price": base_ref,
+            "scraped_change_pct": 0.0,
             "min_bound": round(base_ref * 0.72),
             "max_bound": round(base_ref * 1.32),
-            "historical_7d_avg": base_ref,             # 7-day average (updated if available)
+            "historical_7d_avg": base_ref,
             "source": f"Live Web Scraper (BeautifulSoup4: {'ACTIVE' if BS4_AVAILABLE else 'PARSER'})",
             "scrape_status": "SUCCESS"
         }
 
         try:
-            # ── Path A: Yahoo Finance API (for international commodities with a symbol) ──
+            # ── Path A: Yahoo Finance API (Unit 7 REST JSON API) ──
             if config.get("symbol"):
-                # Build the Yahoo Finance chart API URL for this commodity's symbol
-                # interval=1d = daily data, range=7d = last 7 days
                 live_url = f"https://query1.financeapp.com/v8/finance/chart/{config['symbol']}?interval=1d&range=7d"
-                req = urllib.request.Request(live_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                headers  = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
-                # Make the HTTP request to Yahoo Finance (timeout = 3.5 seconds)
-                with urllib.request.urlopen(req, timeout=3.5) as response:
-                    if response.status == 200:
-                        # Parse the JSON response into a Python dict
-                        raw = json.loads(response.read().decode('utf-8'))
+                status_code = 0
+                raw = {}
 
-                        # Navigate the nested JSON structure to extract price data
-                        # raw['chart']['result'][0]['meta'] contains current market info
-                        meta = raw.get('chart', {}).get('result', [{}])[0].get('meta', {})
+                if REQUESTS_AVAILABLE:
+                    resp = requests.get(live_url, headers=headers, timeout=3.5)
+                    status_code = resp.status_code
+                    if status_code == 200:
+                        raw = resp.json()
+                    elif status_code == 404:
+                        result["scrape_status"] = "HTTP_404_NOT_FOUND"
+                    elif status_code == 500:
+                        result["scrape_status"] = "HTTP_500_SERVER_ERROR"
+                else:
+                    req = urllib.request.Request(live_url, headers=headers)
+                    with urllib.request.urlopen(req, timeout=3.5) as response:
+                        status_code = response.status
+                        if status_code == 200:
+                            raw = json.loads(response.read().decode('utf-8'))
 
-                        # quotes contains arrays of open/high/low/close prices for each day
-                        quotes = raw.get('chart', {}).get('result', [{}])[0].get('indicators', {}).get('quote', [{}])[0]
+                if status_code == 200 and raw:
+                    meta = raw.get('chart', {}).get('result', [{}])[0].get('meta', {})
+                    quotes = raw.get('chart', {}).get('result', [{}])[0].get('indicators', {}).get('quote', [{}])[0]
 
-                        chart_price  = meta.get('regularMarketPrice')  # Current live price
-                        prev_close   = meta.get('previousClose')       # Yesterday's closing price
-                        close_series = quotes.get('close', [])         # Array of last 7 close prices
+                    chart_price  = meta.get('regularMarketPrice')
+                    prev_close   = meta.get('previousClose')
+                    close_series = quotes.get('close', [])
 
-                        if chart_price and prev_close:
-                            # Calculate % change from previous close
-                            change_pct = ((chart_price - prev_close) / prev_close) * 100
+                    if chart_price and prev_close:
+                        change_pct = ((chart_price - prev_close) / prev_close) * 100
+                        ratio = chart_price / prev_close
+                        spot  = round(base_ref * ratio)
 
-                            # Scale the INR price using the international/INR ratio
-                            # (Yahoo Finance prices are in USD — we use ratio to scale our INR base)
-                            ratio = chart_price / prev_close
-                            spot  = round(base_ref * ratio)   # Estimated INR spot price
+                        result["scraped_spot_price"] = spot
+                        result["scraped_change_pct"] = round(change_pct, 2)
+                        result["min_bound"] = round(spot * 0.72)
+                        result["max_bound"] = round(spot * 1.32)
 
-                            # Update result with live scraped values
-                            result["scraped_spot_price"] = spot
-                            result["scraped_change_pct"] = round(change_pct, 2)
-                            result["min_bound"] = round(spot * 0.72)
-                            result["max_bound"] = round(spot * 1.32)
+                    valid_series = [c for c in close_series if c is not None]
+                    if valid_series and prev_close:
+                        avg_chart = sum(valid_series) / len(valid_series)
+                        ratio_avg = avg_chart / prev_close
+                        result["historical_7d_avg"] = round(base_ref * ratio_avg)
 
-                        # Calculate 7-day average from the close price series
-                        valid_series = [c for c in close_series if c is not None]  # Filter out None values
-                        if valid_series and prev_close:
-                            avg_chart = sum(valid_series) / len(valid_series)  # Average of last 7 days
-                            ratio_avg = avg_chart / prev_close
-                            result["historical_7d_avg"] = round(base_ref * ratio_avg)
-
-            # ── Path B: HTML DOM Scraping (for domestic Indian crops without a symbol) ──
+            # ── Path B: HTML DOM Scraping with BeautifulSoup (Unit 7) ──
             else:
-                # Use BeautifulSoup to scrape price from a domestic Indian market website
                 live_url  = "https://markets.business-standard.com"
                 dom_price = CommodityWebScraper.scrape_html_dom_price(live_url)
 
                 if dom_price:
-                    # If a price was found in the HTML, use it to update bounds
                     result["scraped_spot_price"] = round(dom_price)
                     result["min_bound"]          = round(dom_price * 0.75)
                     result["max_bound"]           = round(dom_price * 1.30)
                     result["historical_7d_avg"]  = round(dom_price * 0.98)
 
         except Exception as err:
-            # If scraping fails for any reason, update the status but keep the baseline values
-            # This ensures the ML model still gets data to work with (just less accurate)
             result["scrape_status"] = f"SCRAPE_WARNING ({str(err)})"
 
         return result

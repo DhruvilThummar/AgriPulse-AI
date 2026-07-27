@@ -23,9 +23,9 @@
 # Usage: path('some/url', SomeView.as_view(), name='route-name')
 from django.urls import path
 
-# Import all 3 view classes that handle our endpoints.
+# Import all view classes that handle our endpoints.
 # These are defined in api/views.py.
-from .views import PredictView, HealthCheckView, CommodityListView
+from .views import PredictView, HealthCheckView, CommodityListView, AnalyticsView, ModelSummaryView
 
 # urlpatterns: The list Django reads to match incoming URL paths.
 # Each path() entry maps a URL string → a View class → a route name.
@@ -46,6 +46,14 @@ urlpatterns = [
     # GET /api/v1/commodities → CommodityListView
     # Returns: list of all supported commodities with live scraped price metadata
     path('v1/commodities', CommodityListView.as_view(), name='api-v1-commodities'),
+
+    # GET /api/v1/analytics → AnalyticsView (Unit 1 & 10)
+    # Returns: Pandas statistical describe, groupby aggregations, correlation matrix, IQR outliers, Plotly payloads
+    path('v1/analytics', AnalyticsView.as_view(), name='api-v1-analytics'),
+
+    # GET /api/v1/model/summary → ModelSummaryView (Unit 3-5 & 10)
+    # Returns: Scikit-Learn training metrics, Confusion Matrix, Sensitivity, Specificity, Accuracy, Precision, F1, R2, feature importances
+    path('v1/model/summary', ModelSummaryView.as_view(), name='api-v1-model-summary'),
 
     # ── Legacy Backward Compatibility ──
 

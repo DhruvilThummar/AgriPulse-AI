@@ -140,8 +140,8 @@ class LoadBalancer {
 
     try {
       // Send POST request to the Django worker with the prediction payload
-      // timeout: 5000ms = 5 seconds max wait before treating it as failed
-      const response = await axios.post(endpointUrl, payload, { timeout: 5000 });
+      // timeout: 12000ms = 12 seconds max wait for ML model inference + live web scraping
+      const response = await axios.post(endpointUrl, payload, { timeout: 12000 });
 
       // Attach which worker handled this request (for frontend display/debugging)
       response.data.worker_dispatched = targetNode.id;
@@ -152,14 +152,14 @@ class LoadBalancer {
     } catch (err) {
       // ── FAILOVER LOGIC ──
       // Primary worker failed → try the other worker in the pool
-      console.warn(`[LOAD BALANCER] Worker ${targetNode.id} failed. Attempting failover...`);
+      console.warn(`[LOAD BALANCER] Worker ${targetNode.id} failed (${err.message}). Attempting failover...`);
 
       // Find any other worker that is NOT the one that just failed
-      const fallbackNode = WORKER_NODES.find(n => n.id !== targetNode.id) || WORKER_NODES[0];
+      const fallbackNode = WORKER_NODES.find(n => n.id !== targetNode.id && n.healthy) || WORKER_NODES[0];
       const fallbackUrl  = `${fallbackNode.url}${predictEndpoint}`;
 
       // Try the fallback worker — if this also fails, the error bubbles up to the route handler
-      const fallbackResponse = await axios.post(fallbackUrl, payload, { timeout: 5000 });
+      const fallbackResponse = await axios.post(fallbackUrl, payload, { timeout: 12000 });
       fallbackResponse.data.worker_dispatched = `${fallbackNode.id} (Failover)`;
 
       return fallbackResponse.data;

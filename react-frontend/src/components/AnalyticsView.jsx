@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { predictService } from '../services/predictService';
 
 // Monthly price datasets (₹/Quintal) for the last 12 months to generate dynamic charts
 const HISTORICAL_DATASETS = {
@@ -74,11 +75,13 @@ export default function AnalyticsView() {
   const [compareCrop, setCompareCrop] = useState('groundnut');
   const [timeRange, setTimeRange] = useState('1Y');
   
-  // Live commodities pricing
+  // Live commodities pricing & ML analytics
   const [liveCommodities, setLiveCommodities] = useState([]);
+  const [pandasAnalytics, setPandasAnalytics] = useState(null);
+  const [modelSummary, setModelSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch live scraped prices on load and set up polling
+  // Fetch live scraped prices and ML analytics on load
   useEffect(() => {
     const fetchLivePrices = async () => {
       try {
@@ -96,8 +99,24 @@ export default function AnalyticsView() {
         setLoading(false);
       }
     };
+
+    const fetchMlMetrics = async () => {
+      try {
+        const analyticsRes = await predictService.getAnalytics();
+        if (analyticsRes && analyticsRes.pandas_analytics) {
+          setPandasAnalytics(analyticsRes.pandas_analytics);
+        }
+        const summaryRes = await predictService.getModelSummary();
+        if (summaryRes && summaryRes.classification_metrics) {
+          setModelSummary(summaryRes);
+        }
+      } catch (err) {
+        console.warn('ML Analytics endpoint fetch error:', err.message);
+      }
+    };
     
     fetchLivePrices();
+    fetchMlMetrics();
     const interval = setInterval(fetchLivePrices, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -549,6 +568,75 @@ export default function AnalyticsView() {
           </div>
         ))}
       </div>
+
+      {/* Scikit-Learn ML Model Summary & Confusion Matrix */}
+      {modelSummary && modelSummary.classification_metrics && (
+        <div className="card" style={{ padding: '24px', margin: '24px 0', borderTop: '4px solid #8b5cf6' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h3 style={{ margin: 0 }}>Scikit-Learn ML Model Performance & Confusion Matrix</h3>
+              <p style={{ fontSize: '12px', color: 'var(--clr-on-surface-variant)', marginTop: '4px' }}>
+                Evaluated on 20,000 holdout test set records using Scikit-Learn v{modelSummary.scikit_learn_version}
+              </p>
+            </div>
+            <span className="badge badge-active" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+              Accuracy: {modelSummary.classification_metrics.derived_formulas?.accuracy_pct}%
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '24px', alignItems: 'center' }}>
+            {/* Confusion Matrix Grid */}
+            <div style={{ background: 'var(--clr-surface-container-low)', padding: '16px', borderRadius: '8px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px', color: 'var(--clr-outline)' }}>
+                Confusion Matrix Decomposition
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', textAlign: 'center' }}>
+                <div style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid #22c55e', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--clr-outline)' }}>True Positives (TP)</div>
+                  <strong style={{ fontSize: '18px', color: '#16a34a', fontFamily: 'var(--font-mono)' }}>
+                    {modelSummary.classification_metrics.confusion_matrix?.true_positives_tp?.toLocaleString()}
+                  </strong>
+                </div>
+                <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--clr-outline)' }}>False Positives (FP)</div>
+                  <strong style={{ fontSize: '18px', color: '#dc2626', fontFamily: 'var(--font-mono)' }}>
+                    {modelSummary.classification_metrics.confusion_matrix?.false_positives_fp?.toLocaleString()}
+                  </strong>
+                </div>
+                <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--clr-outline)' }}>False Negatives (FN)</div>
+                  <strong style={{ fontSize: '18px', color: '#dc2626', fontFamily: 'var(--font-mono)' }}>
+                    {modelSummary.classification_metrics.confusion_matrix?.false_negatives_fn?.toLocaleString()}
+                  </strong>
+                </div>
+                <div style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid #22c55e', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--clr-outline)' }}>True Negatives (TN)</div>
+                  <strong style={{ fontSize: '18px', color: '#16a34a', fontFamily: 'var(--font-mono)' }}>
+                    {modelSummary.classification_metrics.confusion_matrix?.true_negatives_tn?.toLocaleString()}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Derived Performance Formulas Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+              {[
+                { label: 'Sensitivity / Recall', val: `${modelSummary.classification_metrics.derived_formulas?.sensitivity_recall_pct}%` },
+                { label: 'Specificity', val: `${modelSummary.classification_metrics.derived_formulas?.specificity_pct}%` },
+                { label: 'Precision', val: `${modelSummary.classification_metrics.derived_formulas?.precision_pct}%` },
+                { label: 'F1 Score', val: `${modelSummary.classification_metrics.derived_formulas?.f1_score_pct}%` },
+                { label: 'Error Rate', val: `${modelSummary.classification_metrics.derived_formulas?.error_rate_pct}%` },
+                { label: 'ROC AUC Score', val: `${modelSummary.classification_metrics.derived_formulas?.roc_auc_score}` },
+              ].map((item, idx) => (
+                <div key={idx} style={{ background: 'var(--clr-surface-container-low)', padding: '12px', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--clr-outline)', textTransform: 'uppercase' }}>{item.label}</div>
+                  <strong style={{ fontSize: '16px', fontFamily: 'var(--font-mono)', color: 'var(--clr-primary)' }}>{item.val}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Regional Yield Predictions Table */}
       <div className="card" style={{ overflow: 'hidden', padding: 0 }}>

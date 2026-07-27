@@ -5,6 +5,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
+    os.environ.setdefault('LOKY_MAX_CPU_COUNT', str(os.cpu_count() or 4))
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'predict_service.settings')
     try:
         from django.core.management import execute_from_command_line

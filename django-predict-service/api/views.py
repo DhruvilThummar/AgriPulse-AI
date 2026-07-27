@@ -26,11 +26,12 @@ from rest_framework.response import Response
 # status: DRF constants for HTTP status codes (e.g. status.HTTP_200_OK = 200)
 from rest_framework import status
 
-# Import our 3 serializers from serializers.py for request/response validation
 from .serializers import (
     PredictionInputSerializer,   # Validates POST /predict input fields
     HealthStatusSerializer,      # Structures GET /health response
-    CommoditySerializer          # Structures GET /commodities response items
+    CommoditySerializer,         # Structures GET /commodities response items
+    AnalyticsResponseSerializer, # Structures GET /analytics response (Unit 1)
+    ModelSummarySerializer       # Structures GET /model/summary response (Unit 3-5)
 )
 
 # Import the web scraper and ML engine from the model/ package
@@ -191,3 +192,35 @@ class CommodityListView(APIView):
 
         # Return HTTP 200 OK with the full commodities list
         return Response({"success": True, "commodities": serializer.data}, status=status.HTTP_200_OK)
+
+
+# ──────────────────────────────────────────────────────────────
+# CLASS: AnalyticsView
+# HANDLES: GET /api/v1/analytics (Unit 1 & 10)
+# ACCESS: Public
+# WHAT IT DOES: Exposes Pandas statistical summaries (describe, corr, groupby aggregations,
+#               IQR outliers, and Plotly visualization payload).
+# ──────────────────────────────────────────────────────────────
+class AnalyticsView(APIView):
+
+    def get(self, request):
+        analytics_data = AgriPulseMLPredictor.get_pandas_analytics()
+        analytics_data["timestamp"] = datetime.utcnow().isoformat() + "Z"
+        serializer = AnalyticsResponseSerializer(analytics_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ──────────────────────────────────────────────────────────────
+# CLASS: ModelSummaryView
+# HANDLES: GET /api/v1/model/summary (Unit 3-5 & 10)
+# ACCESS: Public
+# WHAT IT DOES: Exposes Scikit-Learn training metrics, Confusion Matrix decomposition,
+#               regression parameters, and feature contributions.
+# ──────────────────────────────────────────────────────────────
+class ModelSummaryView(APIView):
+
+    def get(self, request):
+        summary_data = AgriPulseMLPredictor.get_model_summary()
+        summary_data["timestamp"] = datetime.utcnow().isoformat() + "Z"
+        serializer = ModelSummarySerializer(summary_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

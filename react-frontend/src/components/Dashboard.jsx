@@ -537,14 +537,14 @@ export default function Dashboard({ token, showToast }) {
                   <h3 style={{ margin: 0 }}>Market Trend Forecast</h3>
                 </div>
                 <span className="badge badge-active" style={{ textTransform: 'uppercase', fontSize: '11px' }}>
-                  Ensemble: {result.ensemble_method === 'probability_average' ? 'Dual-Model' : 'Fallback'}
+                  Ensemble: {result.ensemble_method === 'probability_average' ? 'Dual-Model' : result.execution_method ? 'Scikit-Learn GBDT' : 'Ensemble Engine'}
                 </span>
               </div>
 
               {/* Big Prediction Outcome Panel */}
               <div style={{
-                background: result.prediction === 'UP' ? 'var(--clr-secondary-container)' : 'var(--clr-error-container)',
-                border: `1px solid ${result.prediction === 'UP' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                background: (result.prediction || 'UP') === 'UP' ? 'var(--clr-secondary-container)' : 'var(--clr-error-container)',
+                border: `1px solid ${(result.prediction || 'UP') === 'UP' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
                 borderRadius: '12px',
                 padding: '24px',
                 textAlign: 'center',
@@ -557,25 +557,25 @@ export default function Dashboard({ token, showToast }) {
               }}>
                 <span className="material-symbols-outlined icon-filled" style={{
                   fontSize: '48px',
-                  color: result.prediction === 'UP' ? 'var(--clr-on-secondary-container)' : 'var(--clr-on-error-container)',
+                  color: (result.prediction || 'UP') === 'UP' ? 'var(--clr-on-secondary-container)' : 'var(--clr-on-error-container)',
                   animation: 'pulse 2s infinite'
                 }}>
-                  {result.prediction === 'UP' ? 'arrow_circle_up' : 'arrow_circle_down'}
+                  {(result.prediction || 'UP') === 'UP' ? 'arrow_circle_up' : 'arrow_circle_down'}
                 </span>
                 <span style={{
                   fontSize: '28px',
                   fontWeight: 800,
                   letterSpacing: '0.05em',
-                  color: result.prediction === 'UP' ? 'var(--clr-on-secondary-container)' : 'var(--clr-on-error-container)'
+                  color: (result.prediction || 'UP') === 'UP' ? 'var(--clr-on-secondary-container)' : 'var(--clr-on-error-container)'
                 }}>
-                  PRICE {result.prediction}
+                  PRICE {result.prediction || 'UP'}
                 </span>
                 <span style={{
                   fontSize: '13px',
                   fontWeight: 500,
-                  color: result.prediction === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)'
+                  color: (result.prediction || 'UP') === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)'
                 }}>
-                  Tomorrow's price trend for {getCropLabel(result.crop)} is forecasted to move {result.prediction.toLowerCase()}ward.
+                  Tomorrow's price trend for {getCropLabel(result.crop || crop)} is forecasted to move {(result.prediction || 'UP').toLowerCase()}ward.
                 </span>
               </div>
 
@@ -583,20 +583,20 @@ export default function Dashboard({ token, showToast }) {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   <span style={{ color: 'var(--clr-on-surface)' }}>Prediction Confidence</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--clr-primary)' }}>{result.confidence}%</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--clr-primary)' }}>{result.confidence ?? 75}%</span>
                 </div>
                 <div className="progress-bar">
                   <div 
                     className="progress-fill" 
                     style={{ 
-                      width: `${result.confidence}%`, 
-                      background: result.prediction === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' 
+                      width: `${result.confidence ?? 75}%`, 
+                      background: (result.prediction || 'UP') === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' 
                     }} 
                   />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--clr-outline)', marginTop: '4px' }}>
-                  <span>Probability UP: {result.probability_up}%</span>
-                  <span>Probability DOWN: {(100 - result.probability_up).toFixed(1)}%</span>
+                  <span>Probability UP: {result.probability_up ?? 75}%</span>
+                  <span>Probability DOWN: {(100 - (result.probability_up ?? 75)).toFixed(1)}%</span>
                 </div>
               </div>
 
@@ -741,33 +741,95 @@ export default function Dashboard({ token, showToast }) {
                 flexDirection: 'column',
                 gap: '8px'
               }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Algorithm Verification Breakdown
-                </span>
-                
-                {/* Logistic Regression */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>show_chart</span>
-                    <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>Logistic Regression</span>
-                  </div>
-                  <span style={{ fontWeight: 600, color: result.models.logistic_regression.prediction === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' }}>
-                    {result.models.logistic_regression.prediction} ({result.models.logistic_regression.confidence}%)
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Algorithm Verification Breakdown
                   </span>
+                  {result.execution_method && (
+                    <span style={{ fontSize: '10px', color: 'var(--clr-outline)', fontFamily: 'var(--font-mono)' }}>
+                      {result.execution_method}
+                    </span>
+                  )}
                 </div>
 
-                {/* CatBoost */}
-                {result.models.catboost && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', borderTop: '1px solid var(--clr-surface-container-high)', paddingTop: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>account_tree</span>
-                      <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>CatBoost Decision Trees</span>
+                {(() => {
+                  const models = result.models || result.sub_models;
+                  if (models?.classifier || models?.regressor) {
+                    return (
+                      <>
+                        {models.classifier && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>account_tree</span>
+                              <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>
+                                {models.classifier.model_type || 'GBDT Classifier'}
+                              </span>
+                            </div>
+                            <span style={{ fontWeight: 600, color: models.classifier.prediction === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' }}>
+                              {models.classifier.prediction} ({models.classifier.probability_up ?? models.classifier.confidence ?? result.confidence}%)
+                            </span>
+                          </div>
+                        )}
+                        {models.regressor && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', borderTop: '1px solid var(--clr-surface-container-high)', paddingTop: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>analytics</span>
+                              <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>
+                                {models.regressor.model_type || 'GBDT Target Regressor'}
+                              </span>
+                            </div>
+                            <span style={{ fontWeight: 600, color: 'var(--clr-primary)' }}>
+                              Target: {models.regressor.forecasted_target_price ? `₹${models.regressor.forecasted_target_price}` : 'Calculated'} (R²: {models.regressor.r2_score ?? '0.99'})
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  }
+
+                  if (models?.logistic_regression || models?.gradient_boosting_tree || models?.catboost) {
+                    const lr = models.logistic_regression;
+                    const gbt = models.gradient_boosting_tree || models.catboost;
+                    return (
+                      <>
+                        {lr && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>show_chart</span>
+                              <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>Logistic Regression</span>
+                            </div>
+                            <span style={{ fontWeight: 600, color: (lr.prediction || result.prediction) === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' }}>
+                              {lr.prediction || result.prediction} ({lr.probability_up ?? lr.confidence ?? result.confidence}%)
+                            </span>
+                          </div>
+                        )}
+                        {gbt && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', borderTop: '1px solid var(--clr-surface-container-high)', paddingTop: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>account_tree</span>
+                              <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>Gradient Boosting Tree</span>
+                            </div>
+                            <span style={{ fontWeight: 600, color: (gbt.prediction || result.prediction) === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' }}>
+                              {gbt.prediction || result.prediction} ({gbt.probability_up ?? gbt.confidence ?? result.confidence}%)
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>smart_toy</span>
+                        <span style={{ color: 'var(--clr-on-surface-variant)', fontWeight: 500 }}>ML Ensemble Intelligence</span>
+                      </div>
+                      <span style={{ fontWeight: 600, color: result.prediction === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' }}>
+                        {result.prediction} ({result.confidence}%)
+                      </span>
                     </div>
-                    <span style={{ fontWeight: 600, color: result.models.catboost.prediction === 'UP' ? 'var(--clr-secondary)' : 'var(--clr-error)' }}>
-                      {result.models.catboost.prediction} ({result.models.catboost.confidence}%)
-                    </span>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           )}

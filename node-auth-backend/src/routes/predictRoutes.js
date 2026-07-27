@@ -158,6 +158,41 @@ router.post('/', authMiddleware, async (req, res) => {
 
 
 // ════════════════════════════════════════════════════════════
+// ROUTE: GET /api/predict/analytics
+// ACCESS: Public / Private
+// WHAT IT DOES: Proxy to Django GET /api/v1/analytics (Pandas data wrangling & stats)
+// ════════════════════════════════════════════════════════════
+router.get('/analytics', async (req, res) => {
+  try {
+    const axios = require('axios');
+    const targetNode = loadBalancer.getNextWorker();
+    const response = await axios.get(`${targetNode.url}/api/v1/analytics`, { timeout: 5000 });
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error('[PREDICT ROUTE] Error fetching analytics from Django:', error.message);
+    return res.status(500).json({ error: 'Failed to fetch analytics from Django predict service' });
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// ROUTE: GET /api/predict/summary & GET /api/predict/model-summary
+// ACCESS: Public / Private
+// WHAT IT DOES: Proxy to Django GET /api/v1/model/summary (Scikit-Learn metrics & confusion matrix)
+// ════════════════════════════════════════════════════════════
+router.get(['/summary', '/model-summary'], async (req, res) => {
+  try {
+    const axios = require('axios');
+    const targetNode = loadBalancer.getNextWorker();
+    const response = await axios.get(`${targetNode.url}/api/v1/model/summary`, { timeout: 5000 });
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error('[PREDICT ROUTE] Error fetching model summary from Django:', error.message);
+    return res.status(500).json({ error: 'Failed to fetch model summary from Django predict service' });
+  }
+});
+
+
+// ════════════════════════════════════════════════════════════
 // ROUTE: GET /api/predict/history
 // ACCESS: Private (JWT required)
 // WHAT IT DOES: Returns the 20 most recent predictions made by this user.

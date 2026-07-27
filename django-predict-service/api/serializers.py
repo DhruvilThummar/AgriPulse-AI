@@ -126,3 +126,32 @@ class CommoditySerializer(serializers.Serializer):
     min_bound = serializers.IntegerField()      # Lower price bound for this commodity
     max_bound = serializers.IntegerField()      # Upper price bound for this commodity
     symbol = serializers.CharField(allow_null=True)  # Yahoo Finance ticker (e.g. "ZW=F"), or None
+
+
+# ──────────────────────────────────────────────────────────────
+# CLASS: AnalyticsResponseSerializer
+# WHAT IT IS: Serializer for GET /api/v1/analytics endpoint (Unit 1 & 10)
+# ──────────────────────────────────────────────────────────────
+class AnalyticsResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    pandas_analytics = serializers.DictField()
+    chart_payloads = serializers.DictField()
+    dataset_samples = serializers.IntegerField()
+    pandas_version = serializers.CharField()
+    timestamp = serializers.CharField()
+
+
+# ──────────────────────────────────────────────────────────────
+# CLASS: ModelSummarySerializer
+# WHAT IT IS: Serializer for GET /api/v1/model/summary endpoint (Unit 3-5 & 10)
+# ──────────────────────────────────────────────────────────────
+class ModelSummarySerializer(serializers.Serializer):
+    status = serializers.CharField()
+    classification_metrics = serializers.DictField()
+    linear_regression_metrics = serializers.DictField()
+    gbdt_regressor_metrics = serializers.DictField()
+    feature_contributions = serializers.DictField()
+    feature_names = serializers.ListField(child=serializers.CharField())
+    scikit_learn_version = serializers.CharField()
+    trained_at = serializers.CharField()
+    timestamp = serializers.CharField()

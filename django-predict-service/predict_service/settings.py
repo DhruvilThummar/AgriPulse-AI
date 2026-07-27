@@ -8,8 +8,13 @@
 # WHEN IT RUNS: Automatically loaded by Django on every server start.
 # ──────────────────────────────────────────────────────────────
 
-import os            # os module: used to read environment variables from .env
-from pathlib import Path  # Path: used to build cross-platform file paths
+import os
+import warnings
+from pathlib import Path
+
+# Environment variable to prevent joblib loky backend wmic process search on Windows 11
+os.environ.setdefault('LOKY_MAX_CPU_COUNT', str(os.cpu_count() or 4))
+warnings.filterwarnings('ignore', category=UserWarning, module='joblib')
 
 # BASE_DIR points to the root folder of this project
 # Path(__file__) = this settings.py file
