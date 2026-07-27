@@ -71,48 +71,91 @@ export default function AccountView({ user, onLogout, showToast }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '24px', marginTop: '16px', alignItems: 'start' }}>
         
         {/* User Card */}
-        <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div 
+          className="card" 
+          style={{ 
+            padding: '28px 24px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            textAlign: 'center',
+            background: 'rgba(255, 255, 255, 0.45)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.35)',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <div style={{
-            width: '80px',
-            height: '80px',
+            width: '88px',
+            height: '88px',
             borderRadius: '50%',
-            background: 'var(--clr-primary)',
+            background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-secondary))',
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '32px',
+            fontSize: '36px',
             fontWeight: 'bold',
-            marginBottom: '16px',
-            boxShadow: 'var(--shadow-level-2)'
+            marginBottom: '18px',
+            boxShadow: '0 0 20px rgba(1, 45, 29, 0.25), 0 0 0 4px rgba(255, 255, 255, 0.4)'
           }}>
             {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
           </div>
-          <h3 style={{ margin: '0 0 4px 0' }}>{user?.name || 'Trader Member'}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--clr-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 700, color: 'var(--clr-on-surface)' }}>{user?.name || 'Trader Member'}</h3>
+          <span style={{ 
+            fontSize: '10px', 
+            color: 'var(--clr-secondary)', 
+            fontWeight: 700, 
+            textTransform: 'uppercase', 
+            letterSpacing: '0.08em',
+            background: 'rgba(52, 211, 153, 0.1)',
+            padding: '4px 10px',
+            borderRadius: '9999px',
+            marginTop: '4px'
+          }}>
             Ensemble Access Active
           </span>
           
-          <div style={{ width: '100%', borderTop: '1px solid var(--clr-outline-variant)', margin: '20px 0', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', textAlign: 'left' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Full Name:</span>
+          <div style={{ 
+            width: '100%', 
+            borderTop: '1px solid rgba(1, 45, 29, 0.1)', 
+            margin: '24px 0 20px 0', 
+            paddingTop: '16px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '12px', 
+            fontSize: '12px', 
+            textAlign: 'left' 
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Full Name</span>
               <strong style={{ color: 'var(--clr-on-surface)' }}>{user?.name || 'N/A'}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Email Address:</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Email Address</span>
               <strong style={{ color: 'var(--clr-on-surface)' }}>{user?.email || 'N/A'}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Member Since:</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Member Since</span>
               <strong style={{ color: 'var(--clr-on-surface)' }}>{joinDate}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Auth Protocol:</span>
-              <strong style={{ color: 'var(--clr-secondary)' }}>JWT Token Secure</strong>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--clr-on-surface-variant)' }}>Auth Protocol</span>
+              <strong style={{ color: 'var(--clr-secondary)', background: 'rgba(52, 211, 153, 0.08)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>JWT Secure</strong>
             </div>
           </div>
 
-          <button className="btn btn-danger" onClick={onLogout} style={{ width: '100%', justifyContent: 'center', gap: '8px' }}>
+          <button 
+            className="btn btn-danger" 
+            onClick={onLogout} 
+            style={{ 
+              width: '100%', 
+              justifyContent: 'center', 
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(186, 26, 26, 0.15)'
+            }}
+          >
             <span className="material-symbols-outlined">logout</span>
             Sign Out of Terminal
           </button>

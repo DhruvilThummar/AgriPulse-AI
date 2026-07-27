@@ -95,9 +95,9 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
-    border: '1px solid var(--clr-outline-variant)',
+    border: '1px solid rgba(1, 45, 29, 0.15)',
     borderRadius: '6px',
-    background: 'var(--clr-surface-container-lowest)',
+    background: 'rgba(255, 255, 255, 0.65)',
     color: 'var(--clr-on-surface)',
     fontSize: '14px',
     fontFamily: 'var(--font-sans)',
@@ -115,8 +115,23 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Authentication">
-      <div className="modal-card" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Authentication" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+      <div 
+        className="modal-card" 
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'rgba(255, 255, 255, 0.65)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255, 255, 255, 0.35)',
+          borderRadius: '16px',
+          padding: '24px 28px',
+          boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.25)',
+          width: '100%',
+          maxWidth: '400px',
+          boxSizing: 'border-box'
+        }}
+      >
 
         {/* OTP view has back button; others show tabs */}
         {view === 'otp' ? (
