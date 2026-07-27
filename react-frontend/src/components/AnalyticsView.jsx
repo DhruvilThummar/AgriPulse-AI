@@ -596,7 +596,15 @@ export default function AnalyticsView({ showToast }) {
             {/* Satellite mock interface */}
             <img
               alt="Agricultural field view telemetry"
-              src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80"
+              src={
+                ndviValue >= 0.8
+                  ? "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80"
+                  : ndviValue >= 0.6
+                  ? "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=600&q=80"
+                  : ndviValue >= 0.4
+                  ? "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80"
+                  : "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80"
+              }
               style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }}
             />
             {/* Scanning radar indicator */}
