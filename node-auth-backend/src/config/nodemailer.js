@@ -91,20 +91,66 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
     // Using a template literal (`...`) so we can embed the otpCode and displayName variables directly.
     // The styling is inline CSS — email clients don't support external CSS files.
     html: `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #f1f5f9; border-radius: 16px; background-color: #ffffff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #059669; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">AgriPulse AI</h2>
-          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Smarter Commodity Trading</p>
-        </div>
-        <p style="color: #334155; font-size: 16px; line-height: 1.5; font-weight: 600;">Hello ${displayName},</p>
-        <p style="color: #334155; font-size: 16px; line-height: 1.5;">Thank you for signing up for AgriPulse AI. Please use the following 6-digit One-Time Password (OTP) to verify your account. This code is valid for 5 minutes.</p>
-        <div style="font-size: 32px; font-weight: 800; text-align: center; margin: 36px 0; color: #0f172a; letter-spacing: 8px; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
-          ${otpCode}
-        </div>
-        <p style="color: #64748b; font-size: 14px; line-height: 1.5;">If you did not request this verification, you can safely ignore this email.</p>
-        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 28px 0;" />
-        <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">This is an automated message, please do not reply directly.</p>
-      </div>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AgriPulse OTP Verification</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
+          <tr>
+            <td align="center">
+              <table role="presentation" width="100%" maxWidth="600" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(1, 45, 29, 0.08); border: 1px solid #e1e8e4;">
+                
+                <!-- Top Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #012d1d 0%, #1b4332 100%); padding: 36px 32px; text-align: center;">
+                    <div style="display: inline-block; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 20px; padding: 6px 14px; margin-bottom: 12px;">
+                      <span style="color: #34d399; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">🔒 Account Verification</span>
+                    </div>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">AgriPulse AI Verification Code</h1>
+                  </td>
+                </tr>
+
+                <!-- Content Area -->
+                <tr>
+                  <td style="padding: 32px 32px 24px;">
+                    <h2 style="color: #012d1d; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">Hello ${displayName},</h2>
+                    <p style="color: #414844; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                      Please use the following 6-digit One-Time Password (OTP) code to authenticate your AgriPulse AI account session. This code is valid for <strong>5 minutes</strong>.
+                    </p>
+
+                    <!-- Glowing OTP Code Box -->
+                    <div style="font-size: 36px; font-weight: 900; text-align: center; margin: 28px 0; color: #012d1d; letter-spacing: 12px; padding: 18px; background: #f0fdf4; border-radius: 14px; border: 2px dashed #86efac; font-family: monospace;">
+                      ${otpCode}
+                    </div>
+
+                    <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">
+                      If you did not request this verification code, please ignore this email or notify security@agripulse.ai.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f8faf9; border-top: 1px solid #e1e8e4; padding: 20px 32px; text-align: center;">
+                    <p style="color: #717973; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">
+                      AgriPulse AI Security &amp; Identity Gateway
+                    </p>
+                    <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+                      Automated System Dispatch — Do Not Reply Directly
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `
   };
 

@@ -1,64 +1,72 @@
 import React from 'react';
+import { NavLink, Link } from 'react-router-dom';
 
 const navItems = [
-  { id: 'markets',     label: 'Live Markets',    icon: 'candlestick_chart' },
-  { id: 'predictions', label: 'ML Predictor',    icon: 'smart_toy' },
-  { id: 'analytics',  label: 'Analytics',       icon: 'assessment' },
-  { id: 'orders',     label: 'Orders',          icon: 'shopping_cart' },
+  { path: '/markets',     label: 'Live Markets',    icon: 'candlestick_chart' },
+  { path: '/predictions', label: 'ML Predictor',    icon: 'smart_toy' },
+  { path: '/analytics',  label: 'Analytics',       icon: 'assessment' },
+  { path: '/orders',     label: 'Orders',          icon: 'shopping_cart' },
 ];
 
 const footerItems = [
-  { id: 'help',    label: 'Help Center', icon: 'help' },
-  { id: 'account', label: 'Account',     icon: 'person' },
+  { path: '/how-it-works', label: 'How It Works', icon: 'auto_awesome' },
+  { path: '/help',         label: 'Help Center',  icon: 'help' },
+  { path: '/account',      label: 'Account',      icon: 'person' },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, user, onLogout }) {
+export default function Sidebar({ user, onLogout }) {
   return (
     <aside className="sidebar" aria-label="Main navigation">
       {/* Brand block */}
-      <div className="sidebar-brand-block">
-        <div className="sidebar-logo-box">CT</div>
-        <div className="sidebar-brand-text">
-          <div className="brand-title">Commodity Terminal</div>
-          <div className="brand-sub">AI Insights Active</div>
+      <Link to="/" style={{ textDecoration: 'none' }}>
+        <div className="sidebar-brand-block">
+          <div className="sidebar-logo-box">CT</div>
+          <div className="sidebar-brand-text">
+            <div className="brand-title">Commodity Terminal</div>
+            <div className="brand-sub">AI Insights Active</div>
+          </div>
         </div>
-      </div>
+      </Link>
 
       {/* New Trade CTA */}
-      <button className="sidebar-new-trade" onClick={() => setActiveTab('predictions')}>
+      <Link to="/predictions" className="sidebar-new-trade" style={{ textDecoration: 'none' }}>
         <span className="material-symbols-outlined icon-filled">add</span>
         <span>New Trade</span>
-      </button>
+      </Link>
 
       {/* Navigation */}
       <nav className="sidebar-nav" aria-label="Sidebar navigation">
         {navItems.map(item => (
-          <button
-            key={item.id}
-            className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(item.id)}
-            aria-current={activeTab === item.id ? 'page' : undefined}
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            style={{ textDecoration: 'none' }}
           >
-            <span className={`material-symbols-outlined ${activeTab === item.id ? 'icon-filled' : ''}`}>
-              {item.icon}
-            </span>
-            <span>{item.label}</span>
-          </button>
+            {({ isActive }) => (
+              <>
+                <span className={`material-symbols-outlined ${isActive ? 'icon-filled' : ''}`}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </>
+            )}
+          </NavLink>
         ))}
       </nav>
 
       {/* Footer links */}
       <div className="sidebar-footer">
         {footerItems.map(item => (
-          <button
-            key={item.id}
-            className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(item.id)}
-            aria-current={activeTab === item.id ? 'page' : undefined}
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            style={{ textDecoration: 'none' }}
           >
             <span className="material-symbols-outlined">{item.icon}</span>
             <span>{item.label}</span>
-          </button>
+          </NavLink>
         ))}
 
         {user && (

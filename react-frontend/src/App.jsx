@@ -1,22 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import Header from './components/common/Header';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
-import Dashboard from './components/Dashboard';
-import MarketsView from './components/MarketsView';
-import AnalyticsView from './components/AnalyticsView';
-import OrdersView from './components/OrdersView';
 import AuthModal from './components/AuthModal';
-import HelpCenter from './components/HelpCenter';
-import AccountView from './components/AccountView';
+
+// Dynamic Route Code-Splitting
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const MarketsView = lazy(() => import('./components/MarketsView'));
+const AnalyticsView = lazy(() => import('./components/AnalyticsView'));
+const OrdersView = lazy(() => import('./components/OrdersView'));
+const HelpCenter = lazy(() => import('./components/HelpCenter'));
+const AccountView = lazy(() => import('./components/AccountView'));
+const HowItWorks = lazy(() => import('./components/HowItWorks'));
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const ContactView = lazy(() => import('./components/ContactView'));
+
+// Loading Fallback Component
+const PageLoadingFallback = () => (
+  <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--clr-outline)' }}>
+    <div className="spinner" style={{ margin: '0 auto 16px', width: '28px', height: '28px' }} />
+    <span style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>Loading AgriPulse Telemetry Module...</span>
+  </div>
+);
+
+// Protected Route Guard Component
+const ProtectedRoute = ({ user, children, setShowAuthModal, showToast }) => {
+  if (!user) {
+    if (showToast) showToast('Please sign in to access dashboard views', 'error');
+    setShowAuthModal(true);
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('home');
   const [toast, setToast] = useState(null);
   
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Map location path to activeTab for Sidebar/Header styling
+  const getActiveTabFromPath = (path) => {
+    if (path === '/') return 'home';
+    return path.replace('/', '');
+  };
+
+  const activeTab = getActiveTabFromPath(location.pathname);
+
   // Header Interactions State
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -113,27 +147,28 @@ export default function App() {
     setToken(userToken);
     localStorage.setItem('agripulse_token', userToken);
     localStorage.setItem('agripulse_user', JSON.stringify(userData));
-    setActiveTab('predictions');
+    navigate('/predictions');
   };
 
   const handleLogout = () => {
     setUser(null);
     setToken(null);
-    setActiveTab('home');
     localStorage.removeItem('agripulse_token');
     localStorage.removeItem('agripulse_user');
     showToast('Signed out successfully', 'success');
+    navigate('/');
   };
 
   const handleGetStarted = () => {
-    if (user) setActiveTab('predictions');
+    if (user) navigate('/predictions');
     else setShowAuthModal(true);
   };
 
   const handleTabChange = (tabId) => {
-    if (tabId === 'home') { setActiveTab('home'); return; }
-    if (user) {
-      setActiveTab(tabId);
+    if (tabId === 'home') { navigate('/'); return; }
+    const path = `/${tabId}`;
+    if (user || ['how-it-works', 'privacy-policy', 'contact'].includes(tabId)) {
+      navigate(path);
     } else {
       showToast('Please sign in to access dashboard views', 'error');
       setShowAuthModal(true);
@@ -147,6 +182,8 @@ export default function App() {
     { id: 'analytics',  label: 'Analytics' },
     { id: 'orders',     label: 'Orders' },
   ];
+
+  const showSidebar = user && !['/', '/how-it-works', '/privacy-policy', '/contact'].includes(location.pathname);
 
   return (
     <>
@@ -176,8 +213,8 @@ export default function App() {
 
       {/* ── Main app layout below header ── */}
       <div className="app-layout">
-        {/* Sidebar (only shown when logged in and not on home view) */}
-        {user && activeTab !== 'home' && (
+        {/* Sidebar */}
+        {showSidebar && (
           <Sidebar
             activeTab={activeTab}
             setActiveTab={handleTabChange}
@@ -188,14 +225,12 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="main-content" style={{
-          paddingLeft: (user && activeTab !== 'home') ? undefined : 0,
-          paddingTop: activeTab === 'home' ? 'var(--header-height)' : undefined,
+          paddingLeft: showSidebar ? undefined : 0,
+          paddingTop: 'var(--header-height)'
         }}>
-          {activeTab === 'home' ? (
-            <Hero user={user} onGetStarted={handleGetStarted} />
-          ) : (
-            <div className="page-container">
-              {/* ── LIVE MANDI TICKER (Positioned at TOP of main view) ── */}
+          <div className="page-container" style={location.pathname === '/' ? { maxWidth: '100%', padding: 0, margin: 0 } : {}}>
+            {/* Live Mandi Ticker shown on non-landing pages */}
+            {location.pathname !== '/' && (
               <div className="mandi-ticker-container" style={{
                 background: 'var(--clr-surface-container-lowest)',
                 border: '1px solid var(--clr-outline-variant)',
@@ -204,7 +239,7 @@ export default function App() {
                 marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 gap: '12px',
                 overflow: 'hidden',
                 fontSize: '11px',
@@ -215,7 +250,6 @@ export default function App() {
                   LIVE MANDI TICKER:
                 </div>
 
-                {/* Infinite Animated Marquee Track */}
                 <div style={{ overflow: 'hidden', flex: 1, position: 'relative', width: '100%' }}>
                   <div className="mandi-ticker-track">
                     {[
@@ -227,13 +261,8 @@ export default function App() {
                       { icon: '🌼', crop: 'MUSTARD', price: '₹5,610', change: '-1.1%', up: false },
                       { icon: '🥜', crop: 'GROUNDNUT', price: '₹6,120', change: '+0.4%', up: true },
                       { icon: '📦', crop: 'TURMERIC', price: '₹7,450', change: '+3.1%', up: true },
-                      // Duplicate sequence for smooth seamless loop
                       { icon: '🌾', crop: 'WHEAT', price: '₹2,501', change: '+2.4%', up: true },
-                      { icon: '🍚', crop: 'BASMATI RICE', price: '₹6,890', change: '+1.2%', up: true },
-                      { icon: '🧵', crop: 'COTTON', price: '₹7,240', change: '-0.5%', up: false },
-                      { icon: '🌽', crop: 'YELLOW CORN', price: '₹1,950', change: '+0.8%', up: true },
-                      { icon: '🌱', crop: 'SOYBEAN', price: '₹5,230', change: '+1.9%', up: true },
-                      { icon: '🌼', crop: 'MUSTARD', price: '₹5,610', change: '-1.1%', up: false }
+                      { icon: '🍚', crop: 'BASMATI RICE', price: '₹6,890', change: '+1.2%', up: true }
                     ].map((t, idx) => (
                       <div
                         key={idx}
@@ -252,29 +281,65 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Latency & Gateway Status Indicator */}
                 <div className="mandi-ticker-status" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--clr-secondary)', fontWeight: 600, fontSize: '10px', flexShrink: 0, zIndex: 2, background: 'var(--clr-surface-container-lowest)', paddingLeft: '8px' }}>
                   <span className="status-dot live" />
                   <span>12ms latency</span>
                 </div>
               </div>
+            )}
 
-              {activeTab === 'markets' && user && <MarketsView token={token} />}
-              {activeTab === 'predictions' && user && (
-                <Dashboard token={token} showToast={showToast} />
-              )}
-              {activeTab === 'analytics' && user && <AnalyticsView />}
-              {activeTab === 'orders' && user && (
-                <OrdersView showToast={showToast} />
-              )}
-              {activeTab === 'help' && user && (
-                <HelpCenter />
-              )}
-              {activeTab === 'account' && user && (
-                <AccountView user={user} onLogout={handleLogout} />
-              )}
-            </div>
-          )}
+            {/* Client-Side Multi-Page Routes with Suspense Dynamic Imports */}
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Routes>
+                <Route path="/" element={
+                  <>
+                    <Hero user={user} onGetStarted={handleGetStarted} />
+                    <div style={{ marginTop: '32px' }}>
+                      <HowItWorks />
+                    </div>
+                  </>
+                } />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/contact" element={<ContactView showToast={showToast} />} />
+                
+                {/* Protected Routes */}
+                <Route path="/predictions" element={
+                  <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
+                    <Dashboard token={token} showToast={showToast} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/markets" element={
+                  <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
+                    <MarketsView token={token} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
+                    <AnalyticsView showToast={showToast} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/orders" element={
+                  <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
+                    <OrdersView showToast={showToast} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/help" element={
+                  <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
+                    <HelpCenter />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account" element={
+                  <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
+                    <AccountView user={user} onLogout={handleLogout} />
+                  </ProtectedRoute>
+                } />
+
+                {/* Catch-all redirect to Home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </div>
 
           {/* ── Global Enriched Platform Footer ── */}
           <footer style={{
@@ -285,7 +350,6 @@ export default function App() {
             color: 'var(--clr-on-surface-variant)',
             fontSize: '12px'
           }}>
-
             <div style={{
               maxWidth: '1440px',
               margin: '0 auto',
@@ -315,22 +379,22 @@ export default function App() {
                   Platform Navigation
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                  <button style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: 'var(--clr-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleTabChange('markets')}>
+                  <Link to="/markets" style={{ color: 'var(--clr-on-surface-variant)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>candlestick_chart</span>
                     Live Commodity Markets
-                  </button>
-                  <button style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: 'var(--clr-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleTabChange('predictions')}>
+                  </Link>
+                  <Link to="/predictions" style={{ color: 'var(--clr-on-surface-variant)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>smart_toy</span>
                     ML Price Predictor
-                  </button>
-                  <button style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: 'var(--clr-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleTabChange('analytics')}>
+                  </Link>
+                  <Link to="/analytics" style={{ color: 'var(--clr-on-surface-variant)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>assessment</span>
                     Analytics Telemetry Hub
-                  </button>
-                  <button style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: 'var(--clr-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleTabChange('orders')}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>shopping_cart</span>
-                    Stock Inventory Panel
-                  </button>
+                  </Link>
+                  <Link to="/how-it-works" style={{ color: 'var(--clr-on-surface-variant)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--clr-primary)' }}>auto_awesome</span>
+                    How It Works Architecture
+                  </Link>
                 </div>
               </div>
 
@@ -350,16 +414,12 @@ export default function App() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-on-surface-variant)' }}>
                     <span className="status-dot success" />
-                    MongoDB Inventory DB: <strong>Connected</strong>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-on-surface-variant)' }}>
-                    <span className="status-dot success" />
-                    Node Proxy Auth API: <strong>Port 5000 Active</strong>
+                    Nodemailer API Gateway: <strong>Port 5000 Active</strong>
                   </div>
                 </div>
               </div>
 
-              {/* Newsletter & Volatility Alerts Signup */}
+              {/* Newsletter Signup */}
               <div>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, color: 'var(--clr-on-surface)', marginBottom: '12px' }}>
                   Market Volatility Alerts
@@ -428,10 +488,9 @@ export default function App() {
             }}>
               <div>© 2026 AgriPulse AI Agricultural Intelligence. All rights reserved.</div>
               <div style={{ display: 'flex', gap: '16px', color: 'var(--clr-outline)' }}>
-                <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
-                <span style={{ cursor: 'pointer' }}>Terms of Service</span>
-                <span style={{ cursor: 'pointer' }}>APMC Exchange Compliance</span>
-                <span style={{ cursor: 'pointer' }}>API Documentation</span>
+                <Link to="/privacy-policy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy Policy</Link>
+                <Link to="/contact" style={{ color: 'inherit', textDecoration: 'none' }}>Contact Technical Desk</Link>
+                <Link to="/how-it-works" style={{ color: 'inherit', textDecoration: 'none' }}>How It Works</Link>
               </div>
             </div>
           </footer>
@@ -456,17 +515,6 @@ export default function App() {
           <span>{toast.message}</span>
         </div>
       )}
-
-      {/* Global Liquid Glass SVG Filters */}
-      <svg style={{ display: 'none' }}>
-        <defs>
-          <filter id="container-glass" x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise" />
-            <feGaussianBlur in="noise" stdDeviation="0.02" result="blur" />
-            <feDisplacementMap in="SourceGraphic" in2="blur" scale="77" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
     </>
   );
 }

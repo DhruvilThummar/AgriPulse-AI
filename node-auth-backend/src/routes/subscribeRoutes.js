@@ -37,32 +37,30 @@ const nodemailer = require('nodemailer');
  * RETURNS: A configured Nodemailer transporter object ready to call .sendMail() on.
  */
 const createTransporter = async () => {
-  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-    // ── Real SMTP Mode ──
-    // Use the email credentials from .env to send actual emails.
-    // EMAIL_SERVICE: The email provider (e.g. "gmail", "outlook", "yahoo").
-    //                Nodemailer knows how to configure popular services automatically.
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const port = parseInt(process.env.SMTP_PORT, 10) || 465;
+
+  if (user && pass) {
+    // ── Real Gmail / SMTP Mode ──
     return nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE || 'gmail',  // Defaults to Gmail if not specified
-      auth: {
-        user: process.env.EMAIL_USER,  // Your email address (e.g. "myapp@gmail.com")
-        pass: process.env.EMAIL_PASS,  // Your email password or Gmail App Password
-      },
+      host: host || 'smtp.gmail.com',
+      port: port,
+      secure: port === 465, // true for 465 (SSL), false for 587 (STARTTLS)
+      auth: { user, pass }
     });
   } else {
-    // ── Ethereal Test Mode ──
-    // No real SMTP credentials → use a free test account from Ethereal.
-    // nodemailer.createTestAccount(): Makes a real HTTP request to ethereal.email
-    //   and returns a temporary { user, pass } pair for a disposable inbox.
+    // ── Ethereal Test Fallback Mode ──
     const testAccount = await nodemailer.createTestAccount();
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
-      port: 587,      // Standard TLS port
-      secure: false,  // false = use STARTTLS (not SSL)
+      port: 587,
+      secure: false,
       auth: {
-        user: testAccount.user,  // Auto-generated temporary username
-        pass: testAccount.pass   // Auto-generated temporary password
-      },
+        user: testAccount.user,
+        pass: testAccount.pass
+      }
     });
   }
 };
@@ -93,7 +91,7 @@ router.post('/', async (req, res) => {
     const transporter = await createTransporter();
 
     // Format sender name and address
-    const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_USER || 'alerts@agripulse.ai';
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'dhruvilthummar37@gmail.com';
     const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriPulse AI" <${fromAddress}>`;
 
     // ── Build the Confirmation Email ──
@@ -110,51 +108,98 @@ router.post('/', async (req, res) => {
       // html: The email body as styled HTML.
       // Uses a template literal to embed the subscriber's name and email dynamically.
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 24px; color: #191c1d; background-color: #f8f9fa;">
-          <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 32px; border: 1px solid #c1c8c2; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-              <h2 style="color: #012d1d; margin: 0; font-size: 22px;">🌾 AgriPulse AI Intelligence</h2>
-            </div>
-            <h3 style="color: #2c694e; margin-top: 0;">Welcome, ${recipientName}!</h3>
-            <p style="font-size: 14px; line-height: 1.6; color: #414844;">
-              Thank you for subscribing to <strong>AgriPulse AI Volatility &amp; Mandi Rate Alerts</strong>.
-            </p>
-            <p style="font-size: 14px; line-height: 1.6; color: #414844;">
-              You will now receive daily AI price trend summaries, satellite telemetry crop health alerts, and real-time APMC Mandi exchange notifications.
-            </p>
-            <div style="background-color: #f3f4f3; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 12px; font-family: monospace; color: #012d1d;">
-              <div>• Subscriber: ${recipientName} (${email})</div>
-              <div>• Alert Frequency: Real-Time / Daily Digest</div>
-              <div>• ML Models Active: CatBoost + Logistic Regression Ensemble</div>
-            </div>
-            <hr style="border: none; border-top: 1px solid #e1e3e4; margin: 24px 0;" />
-            <p style="font-size: 11px; color: #717973; margin: 0;">
-              AgriPulse AI Agricultural Intelligence Platform • APMC Exchange Telemetry Network
-            </p>
-          </div>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>AgriPulse AI Welcome</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" maxWidth="600" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(1, 45, 29, 0.08); border: 1px solid #e1e8e4;">
+                  
+                  <!-- Top Gradient Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #012d1d 0%, #1b4332 100%); padding: 36px 32px; text-align: center;">
+                      <div style="display: inline-block; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 20px; padding: 6px 14px; margin-bottom: 12px;">
+                        <span style="color: #34d399; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">🌾 AgriPulse AI Volatility Network</span>
+                      </div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Welcome to Mandi AI Alerts</h1>
+                      <p style="color: #aeeecb; margin: 6px 0 0 0; font-size: 14px;">Real-Time Spot Prices &amp; Satellite Telemetry Intelligence</p>
+                    </td>
+                  </tr>
+
+                  <!-- Main Content Area -->
+                  <tr>
+                    <td style="padding: 32px 32px 24px;">
+                      <h2 style="color: #012d1d; margin: 0 0 12px 0; font-size: 20px; font-weight: 700;">Hello ${recipientName},</h2>
+                      <p style="color: #414844; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">
+                        Thank you for subscribing to <strong>AgriPulse AI Mandi Volatility Alerts</strong>. You are now connected to India's premier agricultural spot market machine learning network.
+                      </p>
+                      <p style="color: #414844; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+                        You will receive daily automated price trend summaries, satellite vegetation scans (Sentinel-2 NDVI), and APMC Mandi exchange volatility warnings.
+                      </p>
+
+                      <!-- Summary Data Box -->
+                      <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                        <div style="color: #166534; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+                          📋 Subscription Details &amp; Active Sensors
+                        </div>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 13px; color: #166534;">
+                          <tr>
+                            <td style="padding: 4px 0; font-weight: 600;">Subscriber:</td>
+                            <td style="padding: 4px 0; text-align: right; color: #012d1d;">${recipientName} (${email})</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 4px 0; font-weight: 600;">Alert Digest:</td>
+                            <td style="padding: 4px 0; text-align: right; color: #012d1d;">Real-Time / Daily Briefing</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 4px 0; font-weight: 600;">ML Model Pipeline:</td>
+                            <td style="padding: 4px 0; text-align: right; color: #012d1d;">Scikit-Learn GBDT Ensemble</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 4px 0; font-weight: 600;">Exchange Status:</td>
+                            <td style="padding: 4px 0; text-align: right;"><span style="background: #22c55e; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;">18 APMC Mandis Active</span></td>
+                          </tr>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Footer Bar -->
+                  <tr>
+                    <td style="background-color: #f8faf9; border-top: 1px solid #e1e8e4; padding: 20px 32px; text-align: center;">
+                      <p style="color: #717973; font-size: 12px; margin: 0 0 6px 0; font-weight: 600;">
+                        AgriPulse AI Agricultural Intelligence Platform
+                      </p>
+                      <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+                        APMC Mandi Spot Exchange Network • Sentinel-2 Orbit Telemetry
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `
     };
 
-    // transporter.sendMail(options): Sends the email via SMTP.
-    // Returns an "info" object with metadata about the sent message.
     const info = await transporter.sendMail(mailOptions);
     console.log(`[NODEMAILER] Subscription email sent successfully to ${email}. Message ID: ${info.messageId}`);
 
-    // nodemailer.getTestMessageUrl(info): Only works for Ethereal test transport.
-    // Returns a URL where you can VIEW the sent email in the browser (for testing).
-    // Returns false if using a real SMTP transport.
     const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      // Log the preview URL so developers can see the email during testing
-      console.log(`[NODEMAILER] Ethereal Email Preview URL: ${previewUrl}`);
-    }
 
-    // Return success response with optional preview URL
     res.status(200).json({
       success: true,
       message: `Subscription confirmation sent to ${email}`,
-      previewUrl: previewUrl || null  // null when using real SMTP (no preview available)
+      previewUrl: previewUrl || null
     });
 
   } catch (error) {
@@ -163,5 +208,119 @@ router.post('/', async (req, res) => {
   }
 });
 
+
+// ════════════════════════════════════════════════════════════
+// ROUTE: POST /api/contact (and /api/subscribe/contact)
+// ACCESS: Public (no login required)
+// WHAT IT DOES: Sends a Contact Us inquiry notification via Nodemailer.
+// BODY: { name, email, subject, message }
+// ════════════════════════════════════════════════════════════
+router.post('/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  if (!email || !message) {
+    return res.status(400).json({ error: 'Email address and message content are required' });
+  }
+
+  const senderName = name ? name.trim() : email.split('@')[0];
+  const msgSubject = subject ? subject.trim() : 'AgriPulse AI General Inquiry';
+
+  try {
+    const transporter = await createTransporter();
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'dhruvilthummar37@gmail.com';
+    const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriPulse Support" <${fromAddress}>`;
+
+    const mailOptions = {
+      from: formattedFrom,
+      to: email,
+      subject: `📩 [Received] ${msgSubject} - AgriPulse AI Support`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>AgriPulse Inquiry Confirmation</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="100%" maxWidth="600" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(1, 45, 29, 0.08); border: 1px solid #e1e8e4;">
+                  
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #012d1d 0%, #1b4332 100%); padding: 36px 32px; text-align: center;">
+                      <div style="display: inline-block; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 20px; padding: 6px 14px; margin-bottom: 12px;">
+                        <span style="color: #34d399; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">🌿 Technical Support Desk</span>
+                      </div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">Inquiry Received</h1>
+                      <p style="color: #aeeecb; margin: 6px 0 0 0; font-size: 14px;">Ticket Subject: "${msgSubject}"</p>
+                    </td>
+                  </tr>
+
+                  <!-- Body -->
+                  <tr>
+                    <td style="padding: 32px 32px 24px;">
+                      <h2 style="color: #012d1d; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">Hello ${senderName},</h2>
+                      <p style="color: #414844; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Thank you for reaching out to AgriPulse AI Technical Support. We have logged your request regarding <strong>"${msgSubject}"</strong> and routed it to our engineering and Mandi telemetry team.
+                      </p>
+
+                      <!-- Message Copy Box -->
+                      <div style="background-color: #f8faf9; border-left: 4px solid #10b981; border-radius: 6px; padding: 18px; margin-bottom: 24px;">
+                        <div style="color: #012d1d; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">
+                          💬 Submitted Message Content:
+                        </div>
+                        <div style="color: #334155; font-size: 13px; line-height: 1.6; font-style: italic; white-space: pre-wrap;">
+                          "${message}"
+                        </div>
+                      </div>
+
+                      <p style="color: #414844; font-size: 13px; line-height: 1.6; margin: 0;">
+                        Our support desk typically responds within 24 hours. If your request is urgent regarding APMC API integration, please mention your client ID in follow-up communications.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #f8faf9; border-top: 1px solid #e1e8e4; padding: 20px 32px; text-align: center;">
+                      <p style="color: #717973; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">
+                        AgriPulse AI Engineering Support Desk
+                      </p>
+                      <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+                        APMC Commodity Telemetry • Node.js BFF Gateway
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[NODEMAILER] Contact inquiry email dispatched to ${email}. Message ID: ${info.messageId}`);
+
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+
+    res.status(200).json({
+      success: true,
+      message: `Your inquiry has been received! Confirmation email sent to ${email}`,
+      previewUrl: previewUrl || null
+    });
+
+  } catch (error) {
+    console.error('[NODEMAILER] Contact email error:', error.message);
+    res.status(500).json({ error: 'Failed to send contact inquiry email' });
+  }
+});
+
 // Export the router so server.js can mount it with app.use('/api/subscribe', subscribeRoutes)
 module.exports = router;
+

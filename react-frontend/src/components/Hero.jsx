@@ -38,76 +38,108 @@ export default function Hero({ user, onGetStarted }) {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: '48px 24px',
-        background: 'linear-gradient(rgba(1, 45, 29, 0.88), rgba(6, 17, 13, 0.95)), url("https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1920&q=80")',
-        backgroundSize: '110% 110%',
+        padding: '64px 24px',
+        background: `
+          linear-gradient(180deg, rgba(4, 30, 21, 0.78) 0%, rgba(2, 20, 14, 0.92) 65%, rgba(6, 17, 13, 0.98) 100%),
+          radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.25) 0%, transparent 60%),
+          url("https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=2000&q=85")
+        `,
+        backgroundSize: 'cover',
         backgroundPosition: 'center center',
-        animation: 'moveBackground 120s ease-in-out infinite',
+        backgroundAttachment: 'fixed',
         color: '#ffffff',
-        width: '100%'
+        width: '100%',
+        position: 'relative',
+        overflow: 'hidden'
       }}
       aria-label="Hero Section"
     >
+      {/* Badges strip */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <span className="badge badge-active" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          ✨ Ensemble ML Engine v2.4 Active
+        </span>
+        <span style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, border: '1px solid rgba(52, 211, 153, 0.3)' }}>
+          APMC Exchange Telemetry
+        </span>
+      </div>
+
       {/* Headline */}
       <h1
         style={{
-          fontSize: 'clamp(32px, 5vw, 48px)',
-          fontWeight: 700,
+          fontSize: 'clamp(32px, 5vw, 50px)',
+          fontWeight: 800,
           lineHeight: 1.15,
           letterSpacing: '-0.02em',
           color: '#ffffff',
-          maxWidth: '720px',
+          maxWidth: '780px',
           marginBottom: '24px',
         }}
       >
-        Smarter Commodity Trading with AI
+        Smarter Mandi Commodity Trading with AI Ensemble Intelligence
       </h1>
 
       {/* Subtitle */}
       <p
         style={{
           fontSize: '16px',
-          lineHeight: '24px',
-          color: 'rgba(255, 255, 255, 0.75)',
-          maxWidth: '640px',
-          marginBottom: '40px',
+          lineHeight: '26px',
+          color: 'rgba(255, 255, 255, 0.8)',
+          maxWidth: '680px',
+          marginBottom: '36px',
         }}
       >
-        Leverage advanced predictive analytics to anticipate market trends, optimize
-        supply chains, and secure better margins in high-stakes agricultural trading.
+        Anticipate agricultural market price shifts, evaluate 8-variate supply &amp; freight signals, and optimize trade margins using our Scikit-Learn GBDT predictive engine.
       </p>
 
-      {/* CTA */}
-      {/* CTA */}
-      <button
-        className="btn"
-        onClick={onGetStarted}
-        style={{
-          boxShadow: '0 4px 16px 0 rgba(44, 105, 78, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.35)',
-          fontSize: '20px',
-          lineHeight: '28px',
-          padding: '12px 36px',
-          background: 'linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-primary-container) 100%)',
-          color: '#ffffff',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
-          cursor: 'pointer',
-          backdropFilter: 'blur(10px)',
-          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease',
-          fontWeight: 700
-        }}
-        id="hero-cta"
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'scale(1.04)';
-          e.currentTarget.style.boxShadow = '0 8px 24px 0 rgba(44, 105, 78, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.45)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(44, 105, 78, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.35)';
-        }}
-      >
-        {user ? 'Go to Dashboard' : 'Get Started'}
-      </button>
+      {/* Dual CTA Buttons */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <button
+          className="btn"
+          onClick={onGetStarted}
+          style={{
+            boxShadow: '0 4px 18px 0 rgba(44, 105, 78, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.35)',
+            fontSize: '16px',
+            padding: '14px 32px',
+            background: 'linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-primary-container) 100%)',
+            color: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            cursor: 'pointer',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          id="hero-cta"
+        >
+          <span className="material-symbols-outlined">smart_toy</span>
+          {user ? 'Go to ML Predictor' : 'Launch Predictor'}
+        </button>
+
+        <a
+          href="/how-it-works"
+          className="btn"
+          style={{
+            fontSize: '16px',
+            padding: '14px 28px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            color: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            cursor: 'pointer',
+            backdropFilter: 'blur(10px)',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            textDecoration: 'none'
+          }}
+        >
+          <span className="material-symbols-outlined">auto_awesome</span>
+          How It Works
+        </a>
+      </div>
 
       {/* Stats strip */}
       <div

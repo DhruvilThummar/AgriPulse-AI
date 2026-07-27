@@ -142,7 +142,7 @@ Object.entries(SCRAPING_CONFIG).forEach(([crop, conf]) => {
  *          Updates LATEST_PRICES in-memory store in real-time.
  */
 async function scrapeLivePrices() {
-  console.log(`[LIVE MANDI SCRAPER] Scraping real-time spot price updates...`);
+  // Silent background Mandi spot price calculation
   for (const [crop, conf] of Object.entries(SCRAPING_CONFIG)) {
     try {
       let priceChangePercent = (Math.random() * 2 - 1) * 0.4;

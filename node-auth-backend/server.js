@@ -83,8 +83,8 @@ app.use(['/api/v1/commodities', '/api/commodity-prices'], commodityRoutes);
 // Auth routes: handles POST /api/auth/signup, /api/auth/login, /api/auth/verify-otp
 app.use('/api/auth', authRoutes);
 
-// Subscribe routes: handles POST /api/subscribe (newsletter/email subscription)
-app.use('/api/subscribe', subscribeRoutes);
+// Subscribe & Contact routes: handles POST /api/subscribe & POST /api/contact
+app.use(['/api/subscribe', '/api/contact'], subscribeRoutes);
 
 // ── HEALTH CHECK ENDPOINT ──
 // GET /health or GET /api/v1/health → returns BFF server status

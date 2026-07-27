@@ -1,19 +1,6 @@
-/**
- * Module Name: Navbar
- * Location: react-frontend/src/components/Navbar.jsx
- * Purpose: Renders the top navigation bar, exposing company branding and authentication controls.
- * How to use: Import inside App.jsx and render as `<Navbar user={user} onLogout={onLogout} onOpenAuth={onOpenAuth} />`.
- * Why it is used: Implements B2B system branding and controls access validation.
- */
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-import React from 'react'; // TYPE: Library Import. USE: React references. WHY: Required for JSX compiling.
-
-/**
- * Component Type: Functional React Component
- * Where to use: Mounted globally at the top of App.jsx.
- * How to use: Receives destructured props (`user`, `onLogout`, `onOpenAuth`).
- * Why this is used: Provides navigation controls and updates login status instantly when state changes.
- */
 export default function Navbar({ user, onLogout, onOpenAuth }) {
   return (
     <nav 
@@ -39,7 +26,7 @@ export default function Navbar({ user, onLogout, onOpenAuth }) {
       aria-label="Main navigation"
     >
       {/* Brand logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div 
           style={{
             width: '36px',
@@ -60,15 +47,18 @@ export default function Navbar({ user, onLogout, onOpenAuth }) {
             <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
           </svg>
         </div>
-        <span style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em' }}>
+        <span style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em', color: 'var(--clr-on-surface)' }}>
           Agri<span style={{ color: 'var(--clr-emerald-dim)' }}>Pulse</span> AI
         </span>
-      </div>
+      </Link>
 
       {/* Nav Links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xl)' }}>
-        <a href="#hero" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)' }}>Home</a>
-        <a href="#dashboard" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)' }}>Predictions</a>
+        <Link to="/" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)', textDecoration: 'none' }}>Home</Link>
+        <Link to="/predictions" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)', textDecoration: 'none' }}>Predictions</Link>
+        <Link to="/how-it-works" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)', textDecoration: 'none' }}>How It Works</Link>
+        <Link to="/privacy-policy" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)', textDecoration: 'none' }}>Privacy Policy</Link>
+        <Link to="/contact" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--txt-secondary)', textDecoration: 'none' }}>Contact</Link>
       </div>
 
       {/* Session Actions rendering */}
@@ -81,16 +71,12 @@ export default function Navbar({ user, onLogout, onOpenAuth }) {
                 {user.email}
               </span>
             </div>
-            {/* Sign Out Trigger */}
-            {/* TYPE: Callback Event Binding (onClick). HOW: onClick={onLogout}. WHY: Calls parent app signout handler on click. */}
             <button className="btn btn-secondary btn-sm" onClick={onLogout}>
               Sign Out
             </button>
           </>
         ) : (
           <>
-            {/* Sign In Trigger */}
-            {/* TYPE: Callback Event Binding (onClick). HOW: onClick={onOpenAuth}. WHY: Opens login modal on click. */}
             <button className="btn btn-primary btn-sm" onClick={onOpenAuth}>
               Sign In
             </button>
