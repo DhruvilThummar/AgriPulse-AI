@@ -204,9 +204,9 @@ export default function Dashboard({ token, showToast, addNotification }) {
       
       if (addNotification) {
         const cropLabel = getCropLabel(crop);
-        const prediction = response.data.ensemble_prediction;
-        const confidence = response.data.confidence_score;
-        addNotification(`ML Engine: Calculated tomorrow's ${cropLabel} trend as ${prediction.toUpperCase()} (${(confidence * 100).toFixed(0)}% confidence).`);
+        const prediction = response.data.prediction;
+        const confidence = response.data.confidence;
+        addNotification(`ML Engine: Calculated tomorrow's ${cropLabel} trend as ${prediction ? prediction.toUpperCase() : 'UNKNOWN'} (${Number(confidence || 0).toFixed(0)}% confidence).`);
       }
 
       // Refresh the prediction log history

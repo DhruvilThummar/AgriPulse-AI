@@ -92,11 +92,11 @@ router.post('/', async (req, res) => {
 
     // Format sender name and address
     const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'dhruvilthummar37@gmail.com';
-    const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriPulse AI" <${fromAddress}>`;
+    const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriCast AI" <${fromAddress}>`;
 
     // ── Build the Confirmation Email ──
     const mailOptions = {
-      // from: The sender label "AgriPulse AI" and email shown in recipient's inbox
+      // from: The sender label "AgriCast AI" and email shown in recipient's inbox
       from: formattedFrom,
 
       // to: The subscriber's email address
