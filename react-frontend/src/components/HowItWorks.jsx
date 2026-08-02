@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function HowItWorks() {
+  useEffect(() => {
+    document.title = "AgriCast AI — How It Works";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Discover the 4-step dual-intelligence ensemble pipeline combining Scikit-Learn and web scraping.");
+    }
+  }, []);
+
   const [openFaq, setOpenFaq] = useState(0);
 
   // Interactive Mandi Savings Estimator State

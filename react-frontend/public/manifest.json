@@ -1,0 +1,17 @@
+{
+  "short_name": "AgriCast",
+  "name": "AgriCast AI — Smarter Commodity Trading",
+  "description": "Real-time agricultural commodity price intelligence powered by live web scraping and machine learning models.",
+  "start_url": "/",
+  "background_color": "#f8f9fa",
+  "theme_color": "#012d1d",
+  "display": "standalone",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌾</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -183,6 +183,14 @@ export default function OrdersView({
   const [backendPredictions, setBackendPredictions] = useState({});
   const [showLogBot, setShowLogBot] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  useEffect(() => {
+    document.title = "AgriCast AI — Stock & Orders";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Track crop inventory holdings, record trade transactions, and execute risk decay liquidations.");
+    }
+  }, []);
+
   // Notifications state and handlers received via props
 
   // Local simulated predictions & logs

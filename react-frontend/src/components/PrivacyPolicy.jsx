@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function PrivacyPolicy() {
+  useEffect(() => {
+    document.title = "AgriCast AI — Privacy Policy";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Review data protection standards, encryption protocols, and APMC compliance guidelines.");
+    }
+  }, []);
+
   const sections = [
     {
       title: '1. Information We Collect',

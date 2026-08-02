@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 export default function ContactView({ showToast }) {
+  useEffect(() => {
+    document.title = "AgriCast AI — Contact Support";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Get in touch with our engineering team and Mandi telemetry desk.");
+    }
+  }, []);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');

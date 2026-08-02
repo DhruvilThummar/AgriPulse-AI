@@ -19,6 +19,14 @@ export default function MarketsView({ token, autoSync }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [updatedFlash, setUpdatedFlash] = useState({});
 
+  useEffect(() => {
+    document.title = "AgriCast AI — Mandi Board Feed";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Monitor live spot prices across Indian APMC Mandi exchanges and financial commodity benchmarks.");
+    }
+  }, []);
+
   // Fetch commodity data on mount and auto-refresh every 8 seconds
   useEffect(() => {
     fetchCommodityPrices();

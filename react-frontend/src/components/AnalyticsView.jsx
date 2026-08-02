@@ -83,6 +83,14 @@ export default function AnalyticsView({ showToast, autoSync }) {
   const [exportingCsv, setExportingCsv] = useState(false);
   const [syncingTelemetry, setSyncingTelemetry] = useState(false);
 
+  useEffect(() => {
+    document.title = "AgriCast AI — Analytics Hub";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Explore statistical distributions, correlation matrices, and IQR outlier boundaries with Pandas.");
+    }
+  }, []);
+
   // Fetch live scraped prices and ML analytics on load
   useEffect(() => {
     const fetchLivePrices = async () => {

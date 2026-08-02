@@ -11,6 +11,14 @@ export default function AccountView({ user, onLogout, showToast }) {
 
   const activeToken = localStorage.getItem('agripulse_token') || sessionStorage.getItem('agripulse_token');
 
+  useEffect(() => {
+    document.title = "AgriCast AI — Account & Security";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Manage personal details, JWT tokens, and security profile parameters.");
+    }
+  }, []);
+
   // Fetch current persistent inventory details
   useEffect(() => {
     const fetchData = async () => {

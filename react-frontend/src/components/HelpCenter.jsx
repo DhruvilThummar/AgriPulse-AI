@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const FAQS = [
   {
@@ -25,6 +25,14 @@ const FAQS = [
 
 export default function HelpCenter() {
   const [openIdx, setOpenIdx] = useState(null);
+
+  useEffect(() => {
+    document.title = "AgriCast AI — Help & FAQs";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Find answers to common questions about APMC Mandi trading, NDVI indices, and ML predictions.");
+    }
+  }, []);
 
   return (
     <div className="animate-fade-up" id="help-center">

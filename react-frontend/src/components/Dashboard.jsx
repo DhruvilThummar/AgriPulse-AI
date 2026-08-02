@@ -57,6 +57,14 @@ export default function Dashboard({ token, showToast, addNotification }) {
     }
   };
 
+  useEffect(() => {
+    document.title = "AgriCast AI — ML Market Predictor";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Calculate future APMC Mandi price directions and trends using Scikit-Learn GBDT ensemble models.");
+    }
+  }, []);
+
   // Prediction and History State
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
