@@ -20,7 +20,9 @@ export default function Sidebar({ user, onLogout }) {
       {/* Brand block */}
       <Link to="/" style={{ textDecoration: 'none' }}>
         <div className="sidebar-brand-block">
-          <div className="sidebar-logo-box">CT</div>
+          <div className="sidebar-logo-box">
+            <span className="material-symbols-outlined icon-filled" style={{ fontSize: '22px', color: 'var(--clr-on-primary)' }}>spa</span>
+          </div>
           <div className="sidebar-brand-text">
             <div className="brand-title">Commodity Terminal</div>
             <div className="brand-sub" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

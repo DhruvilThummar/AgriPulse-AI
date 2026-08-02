@@ -195,7 +195,7 @@
 
 #### 3. Brand Block & Sidebar Telemetry
 - **Active State pulsing dot (`Sidebar.jsx` & `index.css`)**: Integrates `@keyframes pulse-glowing-green` and `@keyframes pulse-glowing-red` to power status indicator dots dynamically.
-- **Logo Gradient Overlay (`index.css`)**: Styles the logo box container with `linear-gradient(135deg, var(--clr-primary), var(--clr-primary-container))`, custom border radius, border-outline rules, and soft drop shadow.
+- **Agricultural Logo Box (`Sidebar.jsx` & `index.css`)**: Upgraded from text (`CT`) to a premium filled leaf icon (`spa`) centered in a custom gradient box. Includes responsive hover micro-animations that rotate (`-6deg`) and scale (`1.08`) the icon dynamically.
 
 ---
 

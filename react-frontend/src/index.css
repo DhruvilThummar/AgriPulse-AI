@@ -388,6 +388,12 @@ a:hover { color: var(--clr-primary); }
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 12px rgba(1, 45, 29, 0.15);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-brand-block:hover .sidebar-logo-box {
+  transform: scale(1.08) rotate(-6deg);
+  box-shadow: 0 6px 16px rgba(1, 45, 29, 0.25);
 }
 
 .sidebar-brand-text .brand-title {
@@ -396,6 +402,11 @@ a:hover { color: var(--clr-primary); }
   color: var(--clr-primary);
   line-height: 1.2;
   letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+}
+
+.sidebar-brand-block:hover .brand-title {
+  color: var(--clr-secondary);
 }
 
 .sidebar-brand-text .brand-sub {
