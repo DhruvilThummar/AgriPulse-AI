@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 // All available crop categories for filtering
 const CROP_CATEGORIES = ['All', 'Wheat', 'Rice', 'Corn', 'Cotton', 'Soybean', 'Sugarcane', 'Mustard', 'Groundnut', 'Turmeric', 'Chilli'];
@@ -43,7 +44,7 @@ export default function MarketsView({ token, autoSync }) {
   const fetchCommodityPrices = async () => {
     try {
       const savedToken = token || localStorage.getItem('agripulse_token');
-      const { data } = await axios.get('http://localhost:5000/api/commodity-prices', {
+      const { data } = await axios.get(`${BASE_URL}/commodity-prices`, {
         headers: { Authorization: `Bearer ${savedToken}` }
       });
       const newComms = data.commodities || [];

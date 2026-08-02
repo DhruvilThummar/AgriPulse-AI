@@ -4,6 +4,7 @@ import Header from './components/common/Header';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import AuthModal from './components/AuthModal';
+import { BASE_URL } from './services/apiClient';
 
 // Dynamic Route Code-Splitting
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -71,7 +72,7 @@ export default function App() {
     if (!subscribeEmail) return;
     setSubscribing(true);
     try {
-      const res = await fetch('http://localhost:5000/api/subscribe', {
+      const res = await fetch(`${BASE_URL}/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: subscribeName, email: subscribeEmail })

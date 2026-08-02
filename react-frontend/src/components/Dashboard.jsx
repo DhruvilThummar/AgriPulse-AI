@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 const CROP_OPTIONS = [
   { value: 'wheat', label: 'Wheat (Premium)' },
@@ -83,7 +84,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
   // Fetch prediction log history
   const fetchHistory = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/predict/history', {
+      const response = await axios.get(`${BASE_URL}/predict/history`, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       if (response.data?.success) {
@@ -100,7 +101,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
   const handleClearHistory = async () => {
     if (!window.confirm('Are you sure you want to clear all prediction logs?')) return;
     try {
-      await axios.delete('http://localhost:5000/api/predict/history', {
+      await axios.delete(`${BASE_URL}/predict/history`, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setHistory([]);
@@ -114,7 +115,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
   // Delete single log entry
   const handleDeleteSingleLog = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/predict/history/${id}`, {
+      await axios.delete(`${BASE_URL}/predict/history/${id}`, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setHistory(prev => prev.filter(item => item._id !== id));
@@ -141,7 +142,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
   // Fetch live scraped commodities to get current market rates
   const fetchCommodities = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/commodity-prices', {
+      const response = await axios.get(`${BASE_URL}/commodity-prices`, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       if (response.data?.success) {
@@ -205,7 +206,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
 
       let predData;
       try {
-        const response = await axios.post('http://localhost:5000/api/predict', payload, {
+        const response = await axios.post(`${BASE_URL}/predict`, payload, {
           headers: { Authorization: `Bearer ${activeToken}` }
         });
         predData = response.data;

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 /* ─── Inline Styles for premium glassmorphic UI ─── */
 const styles = {
@@ -279,7 +280,7 @@ export default function OrdersView({
   // Fetch persistent user inventory from database
   const fetchUserInventory = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/inventory', {
+      const response = await axios.get(`${BASE_URL}/inventory`, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       if (response.data && response.data.success) {
@@ -301,7 +302,7 @@ export default function OrdersView({
   // Sync inventory & cash updates to DB
   const saveInventoryToDb = async (newInventory, newCash, newLimit) => {
     try {
-      await axios.post('http://localhost:5000/api/inventory/adjust', {
+      await axios.post(`${BASE_URL}/inventory/adjust`, {
         inventory: newInventory,
         cashReserves: newCash,
         storageLimit: newLimit !== undefined ? newLimit : storageLimit
@@ -317,7 +318,7 @@ export default function OrdersView({
   // Fetch live commodity prices
   const fetchCommodityPrices = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5000/api/commodity-prices', {
+      const { data } = await axios.get(`${BASE_URL}/commodity-prices`, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setCommodities(data.commodities || []);
@@ -369,7 +370,7 @@ export default function OrdersView({
             crop: item.crop
           };
 
-          const response = await axios.post('http://localhost:5000/api/predict', payload, {
+          const response = await axios.post(`${BASE_URL}/predict`, payload, {
             headers: { Authorization: `Bearer ${activeToken}` }
           });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 export default function AccountView({ user, onLogout, showToast }) {
   const joinDate = '2026-07-01';
@@ -23,7 +24,7 @@ export default function AccountView({ user, onLogout, showToast }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/inventory', {
+        const response = await axios.get(`${BASE_URL}/inventory`, {
           headers: { Authorization: `Bearer ${activeToken}` }
         });
         if (response.data && response.data.success) {
@@ -48,7 +49,7 @@ export default function AccountView({ user, onLogout, showToast }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/inventory/adjust', {
+      const response = await axios.post(`${BASE_URL}/inventory/adjust`, {
         cashReserves: Number(cash),
         storageLimit: Number(limit)
       }, {

@@ -7,6 +7,7 @@
 
 import React, { useState, useMemo } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 // ── Password Validation Rules ──
 const PASSWORD_RULES = [
@@ -43,7 +44,7 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     if (!email || !password) { setError('Please fill in all fields'); return; }
     setError(''); setLoading(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const { data } = await axios.post(`${BASE_URL}/auth/login`, { email, password });
       onAuthSuccess(data.user, data.token);
       showToast('Logged in successfully', 'success');
       onClose();
@@ -70,7 +71,7 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
 
     setError(''); setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/auth/signup', { name, email, password });
+      await axios.post(`${BASE_URL}/auth/signup`, { name, email, password });
       showToast('OTP sent to your email', 'success');
       setView('otp');
     } catch (err) {
@@ -84,7 +85,7 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     if (!otpCode || otpCode.length !== 6) { setError('Please enter the 6-digit code'); return; }
     setError(''); setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/auth/verify-otp', { email, otp: otpCode });
+      await axios.post(`${BASE_URL}/auth/verify-otp`, { email, otp: otpCode });
       showToast('Account verified! You can now sign in.', 'success');
       setView('login'); setPassword(''); setOtpCode('');
     } catch (err) {

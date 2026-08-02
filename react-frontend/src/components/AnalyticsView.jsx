@@ -6,32 +6,33 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { predictService } from '../services/predictService';
+import { BASE_URL } from '../services/apiClient';
 
 // Monthly price datasets (₹/Quintal) for the last 12 months to generate dynamic charts
 const HISTORICAL_DATASETS = {
-  wheat:     [2200, 2250, 2180, 2300, 2350, 2400, 2380, 2420, 2460, 2410, 2450, 2490],
-  rice:      [6200, 6300, 6400, 6350, 6450, 6500, 6600, 6580, 6700, 6720, 6800, 6850],
-  corn:      [1800, 1850, 1820, 1890, 1920, 1950, 1910, 1960, 1980, 1940, 1950, 1970],
-  cotton:    [6800, 6900, 6750, 6850, 7000, 7100, 7050, 7150, 7200, 7100, 7250, 7300],
-  soybean:   [4800, 4950, 4900, 5050, 5100, 5150, 5080, 5200, 5250, 5180, 5200, 5280],
-  sugarcane: [310,  320,  315,  325,  330,  335,  332,  338,  340,  336,  342,  345],
-  mustard:   [5200, 5300, 5250, 5380, 5420, 5500, 5450, 5520, 5600, 5550, 5620, 5680],
+  wheat: [2200, 2250, 2180, 2300, 2350, 2400, 2380, 2420, 2460, 2410, 2450, 2490],
+  rice: [6200, 6300, 6400, 6350, 6450, 6500, 6600, 6580, 6700, 6720, 6800, 6850],
+  corn: [1800, 1850, 1820, 1890, 1920, 1950, 1910, 1960, 1980, 1940, 1950, 1970],
+  cotton: [6800, 6900, 6750, 6850, 7000, 7100, 7050, 7150, 7200, 7100, 7250, 7300],
+  soybean: [4800, 4950, 4900, 5050, 5100, 5150, 5080, 5200, 5250, 5180, 5200, 5280],
+  sugarcane: [310, 320, 315, 325, 330, 335, 332, 338, 340, 336, 342, 345],
+  mustard: [5200, 5300, 5250, 5380, 5420, 5500, 5450, 5520, 5600, 5550, 5620, 5680],
   groundnut: [5800, 5900, 5850, 5950, 6000, 6080, 6020, 6100, 6150, 6080, 6120, 6200],
-  turmeric:  [6900, 7100, 7050, 7200, 7300, 7350, 7280, 7400, 7450, 7380, 7420, 7500],
-  chilli:    [8600, 8800, 8750, 8950, 9100, 9200, 9120, 9250, 9300, 9220, 9350, 9400],
+  turmeric: [6900, 7100, 7050, 7200, 7300, 7350, 7280, 7400, 7450, 7380, 7420, 7500],
+  chilli: [8600, 8800, 8750, 8950, 9100, 9200, 9120, 9250, 9300, 9220, 9350, 9400],
 };
 
 const CROP_METRICS = {
-  wheat:     { supply: '1.15B', supplyTrend: '+2.1%', demand: '85.2', demandTrend: '-0.8%', export: '380M', color: '#eab308' },
-  rice:      { supply: '1.24B', supplyTrend: '+3.2%', demand: '89.4', demandTrend: '-1.5%', export: '450M', color: '#60a5fa' },
-  corn:      { supply: '15,000', supplyTrend: '-0.8%', demand: '94.2', demandTrend: '+2.1%', export: '220M', color: '#f59e0b' },
-  cotton:    { supply: '120M', supplyTrend: '+6.1%', demand: '78.5', demandTrend: '+4.2%', export: '48M', color: '#ec4899' },
-  soybean:   { supply: '360M', supplyTrend: '+2.8%', demand: '85.9', demandTrend: '+1.1%', export: '95M', color: '#10b981' },
+  wheat: { supply: '1.15B', supplyTrend: '+2.1%', demand: '85.2', demandTrend: '-0.8%', export: '380M', color: '#eab308' },
+  rice: { supply: '1.24B', supplyTrend: '+3.2%', demand: '89.4', demandTrend: '-1.5%', export: '450M', color: '#60a5fa' },
+  corn: { supply: '15,000', supplyTrend: '-0.8%', demand: '94.2', demandTrend: '+2.1%', export: '220M', color: '#f59e0b' },
+  cotton: { supply: '120M', supplyTrend: '+6.1%', demand: '78.5', demandTrend: '+4.2%', export: '48M', color: '#ec4899' },
+  soybean: { supply: '360M', supplyTrend: '+2.8%', demand: '85.9', demandTrend: '+1.1%', export: '95M', color: '#10b981' },
   sugarcane: { supply: '1.89B', supplyTrend: '+1.5%', demand: '91.0', demandTrend: 'Stable', export: '180M', color: '#84cc16' },
-  mustard:   { supply: '85M', supplyTrend: '+3.9%', demand: '73.4', demandTrend: '-1.2%', export: '12M', color: '#facc15' },
+  mustard: { supply: '85M', supplyTrend: '+3.9%', demand: '73.4', demandTrend: '-1.2%', export: '12M', color: '#facc15' },
   groundnut: { supply: '68M', supplyTrend: '+1.2%', demand: '80.6', demandTrend: '+0.8%', export: '28M', color: '#d97706' },
-  turmeric:  { supply: '14M', supplyTrend: '-2.4%', demand: '88.5', demandTrend: '+3.0%', export: '9.5M', color: '#ea580c' },
-  chilli:    { supply: '22M', supplyTrend: '+5.7%', demand: '87.1', demandTrend: '+1.9%', export: '14M', color: '#dc2626' }
+  turmeric: { supply: '14M', supplyTrend: '-2.4%', demand: '88.5', demandTrend: '+3.0%', export: '9.5M', color: '#ea580c' },
+  chilli: { supply: '22M', supplyTrend: '+5.7%', demand: '87.1', demandTrend: '+1.9%', export: '14M', color: '#dc2626' }
 };
 
 const CROP_OPTIONS = Object.keys(HISTORICAL_DATASETS);
@@ -40,16 +41,16 @@ const MONTHS = ['Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb
 
 // Regional yield data with baseline yields
 const INITIAL_YIELD_DATA = [
-  { region: 'North America', commodity: 'Corn',      baseline: 10.8, yield: 11.2, variance: '+0.4', status: 'Bullish' },
-  { region: 'South America', commodity: 'Soybean',   baseline: 3.7,  yield: 3.5,  variance: '-0.2', status: 'Bearish' },
-  { region: 'Europe',        commodity: 'Wheat',      baseline: 5.8,  yield: 5.8,  variance: '0.0',  status: 'Neutral' },
-  { region: 'Asia Pacific',  commodity: 'Rice',       baseline: 4.8,  yield: 4.9,  variance: '+0.1', status: 'Bullish' },
-  { region: 'India (Gujarat)',commodity: 'Cotton',     baseline: 1.5,  yield: 1.8,  variance: '+0.3', status: 'Bullish' },
-  { region: 'India (MP)',     commodity: 'Mustard',    baseline: 1.4,  yield: 1.3,  variance: '-0.1', status: 'Bearish' },
-  { region: 'India (AP)',     commodity: 'Chilli',     baseline: 1.6,  yield: 2.1,  variance: '+0.5', status: 'Bullish' },
-  { region: 'India (TN)',     commodity: 'Turmeric',   baseline: 5.0,  yield: 5.2,  variance: '+0.2', status: 'Bullish' },
-  { region: 'India (GJ)',     commodity: 'Groundnut',  baseline: 1.9,  yield: 1.9,  variance: '0.0',  status: 'Neutral' },
-  { region: 'India (UP)',     commodity: 'Sugarcane',  baseline: 78.8, yield: 80.0, variance: '+1.2', status: 'Bullish' },
+  { region: 'North America', commodity: 'Corn', baseline: 10.8, yield: 11.2, variance: '+0.4', status: 'Bullish' },
+  { region: 'South America', commodity: 'Soybean', baseline: 3.7, yield: 3.5, variance: '-0.2', status: 'Bearish' },
+  { region: 'Europe', commodity: 'Wheat', baseline: 5.8, yield: 5.8, variance: '0.0', status: 'Neutral' },
+  { region: 'Asia Pacific', commodity: 'Rice', baseline: 4.8, yield: 4.9, variance: '+0.1', status: 'Bullish' },
+  { region: 'India (Gujarat)', commodity: 'Cotton', baseline: 1.5, yield: 1.8, variance: '+0.3', status: 'Bullish' },
+  { region: 'India (MP)', commodity: 'Mustard', baseline: 1.4, yield: 1.3, variance: '-0.1', status: 'Bearish' },
+  { region: 'India (AP)', commodity: 'Chilli', baseline: 1.6, yield: 2.1, variance: '+0.5', status: 'Bullish' },
+  { region: 'India (TN)', commodity: 'Turmeric', baseline: 5.0, yield: 5.2, variance: '+0.2', status: 'Bullish' },
+  { region: 'India (GJ)', commodity: 'Groundnut', baseline: 1.9, yield: 1.9, variance: '0.0', status: 'Neutral' },
+  { region: 'India (UP)', commodity: 'Sugarcane', baseline: 78.8, yield: 80.0, variance: '+1.2', status: 'Bullish' },
 ];
 
 const calculateYieldsForNdvi = (ndvi) => {
@@ -74,7 +75,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
   const [selectedCrop, setSelectedCrop] = useState('corn');
   const [compareCrop, setCompareCrop] = useState('groundnut');
   const [timeRange, setTimeRange] = useState('1Y');
-  
+
   // Live commodities pricing & ML analytics
   const [liveCommodities, setLiveCommodities] = useState([]);
   const [pandasAnalytics, setPandasAnalytics] = useState(null);
@@ -96,8 +97,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
     const fetchLivePrices = async () => {
       try {
         const token = localStorage.getItem('agripulse_token');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const { data } = await axios.get(`${apiUrl}/api/commodity-prices`, {
+        const { data } = await axios.get(`${BASE_URL}/commodity-prices`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (data && data.success) {
@@ -124,10 +124,10 @@ export default function AnalyticsView({ showToast, autoSync }) {
         console.warn('ML Analytics endpoint fetch error:', err.message);
       }
     };
-    
+
     fetchLivePrices();
     fetchMlMetrics();
-    
+
     let interval;
     if (autoSync) {
       interval = setInterval(fetchLivePrices, 10000);
@@ -136,7 +136,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
       if (interval) clearInterval(interval);
     };
   }, [autoSync]);
-  
+
   // Sort states
   const [yields, setYields] = useState(() => calculateYieldsForNdvi(0.67));
   const [sortField, setSortField] = useState(null);
@@ -169,7 +169,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
   // Helper: generates mathematical SVG path coordinates matching width/height
   const generateSvgPath = (data, width = 800, height = 220) => {
     if (!data || data.length === 0) return { path: '', points: [] };
-    
+
     // Convert to number and filter out NaN values safely
     const cleanData = data.map(Number).filter(v => !isNaN(v));
     if (cleanData.length === 0) return { path: '', points: [] };
@@ -189,11 +189,11 @@ export default function AnalyticsView({ showToast, autoSync }) {
     // Generate bezier path
     let path = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
-      const cpX1 = points[i].x + (points[i+1].x - points[i].x) / 3;
+      const cpX1 = points[i].x + (points[i + 1].x - points[i].x) / 3;
       const cpY1 = points[i].y;
-      const cpX2 = points[i].x + 2 * (points[i+1].x - points[i].x) / 3;
-      const cpY2 = points[i+1].y;
-      path += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${points[i+1].x} ${points[i+1].y}`;
+      const cpX2 = points[i].x + 2 * (points[i + 1].x - points[i].x) / 3;
+      const cpY2 = points[i + 1].y;
+      path += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${points[i + 1].x} ${points[i + 1].y}`;
     }
     return { path, points };
   };
@@ -232,7 +232,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
     const x = e.clientX - rect.left;
     const percentX = x / rect.width;
     const index = Math.round(percentX * (primaryDataset.length - 1));
-    
+
     if (index >= 0 && index < primaryDataset.length) {
       setHoverIndex(index);
       setTooltipPos({
@@ -251,7 +251,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
     const isAsc = sortField === field ? !sortAsc : true;
     setSortField(field);
     setSortAsc(isAsc);
-    
+
     const sorted = [...yields].sort((a, b) => {
       let valA = a[field];
       let valB = b[field];
@@ -355,12 +355,11 @@ export default function AnalyticsView({ showToast, autoSync }) {
   const triggerTelemetryScan = async () => {
     setSyncingTelemetry(true);
     const time = new Date().toLocaleTimeString();
-    
+
     try {
       // 1. Refetch live commodity prices
       const token = localStorage.getItem('agripulse_token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const { data } = await axios.get(`${apiUrl}/api/commodity-prices`, {
+      const { data } = await axios.get(`${BASE_URL}/commodity-prices`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (data && data.success) {
@@ -614,10 +613,10 @@ export default function AnalyticsView({ showToast, autoSync }) {
                 ndviValue >= 0.8
                   ? "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80"
                   : ndviValue >= 0.6
-                  ? "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=600&q=80"
-                  : ndviValue >= 0.4
-                  ? "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80"
-                  : "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80"
+                    ? "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=600&q=80"
+                    : ndviValue >= 0.4
+                      ? "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80"
+                      : "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80"
               }
               style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }}
             />
@@ -632,7 +631,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
               SAT-RECON-5 // RESOLUTION: 0.5m/px
             </div>
           </div>
-          
+
           <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -649,7 +648,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
                 Satellite imagery integrated with on-ground IoT sensors indicates optimal growth conditions, predicting a higher yield margin for Q3.
               </p>
             </div>
-            
+
             <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setShowSatelliteModal(true)}>
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>dashboard</span>
               Analyze Spectral Bands
@@ -848,7 +847,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
                         textAlign: 'right',
                         fontFamily: 'var(--font-mono)',
                         color: row.variance.startsWith('+') ? 'var(--clr-secondary)' :
-                               row.variance.startsWith('-') ? 'var(--clr-error)' : 'var(--clr-outline)',
+                          row.variance.startsWith('-') ? 'var(--clr-error)' : 'var(--clr-outline)',
                         fontWeight: 700
                       }}>
                         {row.variance}
@@ -888,7 +887,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ background: 'var(--clr-surface-container-low)', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>

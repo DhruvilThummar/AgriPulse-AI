@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 export default function Hero({ user, onGetStarted }) {
   const [stats, setStats] = useState({
@@ -12,7 +13,7 @@ export default function Hero({ user, onGetStarted }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/commodity-prices/platform-stats');
+        const response = await axios.get(`${BASE_URL}/commodity-prices/platform-stats`);
         if (response.data) {
           setStats({
             modelAccuracy: response.data.modelAccuracy,

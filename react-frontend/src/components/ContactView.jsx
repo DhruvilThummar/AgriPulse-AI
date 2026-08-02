@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../services/apiClient';
 
 export default function ContactView({ showToast }) {
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function ContactView({ showToast }) {
     setSuccessInfo(null);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/contact', {
+      const res = await axios.post(`${BASE_URL}/contact`, {
         name,
         email,
         subject,
