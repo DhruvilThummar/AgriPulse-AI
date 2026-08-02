@@ -16,6 +16,7 @@ const AccountView = lazy(() => import('./components/AccountView'));
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const ContactView = lazy(() => import('./components/ContactView'));
+const NotFound = lazy(() => import('./components/NotFound'));
 
 // Loading Fallback Component
 const PageLoadingFallback = () => (
@@ -470,8 +471,8 @@ export default function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* Catch-all redirect to Home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Catch-all 404 Not Found Page */}
+                <Route path="*" element={<NotFound showToast={showToast} />} />
               </Routes>
             </Suspense>
           </div>
