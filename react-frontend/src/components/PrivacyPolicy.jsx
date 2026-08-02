@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
     {
       title: '1. Information We Collect',
       icon: 'shield_person',
-      content: `AgriPulse AI collects information required to deliver high-precision agricultural market predictions and maintain account security:
+      content: `AgriCast AI collects information required to deliver high-precision agricultural market predictions and maintain account security:
       • Account Data: Full Name, Email Address, and encrypted password credentials (hashed with bcrypt 10 salt rounds).
       • Telemetry & Usage Input: Commodity selections, freight corridor settings, and numeric parameter inputs supplied during prediction requests.
       • Technical Logs: Session JWT authorization tokens, IP addresses, and standard HTTP web gateway metadata.`
@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
     {
       title: '4. APMC Compliance & Web Scraping Transparency',
       icon: 'gavel',
-      content: `AgriPulse AI operates in alignment with APMC Mandi exchange regulations:
+      content: `AgriCast AI operates in alignment with APMC Mandi exchange regulations:
       • Live Mandi spot prices are scraped from publicly available agricultural board feeds and financial APIs.
       • Forecasts represent probabilistic mathematical guidance and should be evaluated alongside local Mandi board spot rates before committing capital.`
     },
@@ -53,7 +53,7 @@ export default function PrivacyPolicy() {
           Compliance &amp; Security Standards
         </span>
         <h1 style={{ fontSize: 'clamp(28px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '12px' }}>
-          AgriPulse AI Privacy Policy
+          AgriCast AI Privacy Policy
         </h1>
         <p style={{ fontSize: '14px', color: 'var(--clr-on-surface-variant)', margin: 0 }}>
           Last Updated: July 2026 • Version 2.4.0 APMC Compliant

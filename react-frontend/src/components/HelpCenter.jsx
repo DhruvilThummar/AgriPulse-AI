@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 
 const FAQS = [
   {
-    q: "What is AgriPulse AI?",
-    a: "AgriPulse AI is an advanced commodity analysis and price trend forecasting terminal. It uses dual machine learning models (Logistic Regression and CatBoost Classifier) to analyze market signals and estimate price fluctuations."
+    q: "What is AgriCast AI?",
+    a: "AgriCast AI is an advanced commodity analysis and price trend forecasting terminal. It uses dual machine learning models (Logistic Regression and CatBoost Classifier) to analyze market signals and estimate price fluctuations."
   },
   {
     q: "What does '₹/Qtl' stand for?",

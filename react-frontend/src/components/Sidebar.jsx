@@ -24,7 +24,7 @@ export default function Sidebar({ user, onLogout }) {
             <span className="material-symbols-outlined icon-filled" style={{ fontSize: '22px', color: 'var(--clr-on-primary)' }}>spa</span>
           </div>
           <div className="sidebar-brand-text">
-            <div className="brand-title">Commodity Terminal</div>
+            <div className="brand-title">AgriCast AI</div>
             <div className="brand-sub" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span className="pulse-dot-green" style={{
                 display: 'inline-block',

@@ -103,7 +103,7 @@ router.post('/', async (req, res) => {
       to: email,
 
       // subject: Email subject line (shown in inbox preview)
-      subject: `🌾 Welcome ${recipientName} to AgriPulse AI Mandi Volatility Alerts`,
+      subject: `🌾 Welcome ${recipientName} to AgriCast AI Mandi Volatility Alerts`,
 
       // html: The email body as styled HTML.
       // Uses a template literal to embed the subscriber's name and email dynamically.
@@ -113,7 +113,7 @@ router.post('/', async (req, res) => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>AgriPulse AI Welcome</title>
+          <title>AgriCast AI Welcome</title>
         </head>
         <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
@@ -125,7 +125,7 @@ router.post('/', async (req, res) => {
                   <tr>
                     <td style="background: linear-gradient(135deg, #012d1d 0%, #1b4332 100%); padding: 36px 32px; text-align: center;">
                       <div style="display: inline-block; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 20px; padding: 6px 14px; margin-bottom: 12px;">
-                        <span style="color: #34d399; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">🌾 AgriPulse AI Volatility Network</span>
+                        <span style="color: #34d399; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">🌾 AgriCast AI Volatility Network</span>
                       </div>
                       <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Welcome to Mandi AI Alerts</h1>
                       <p style="color: #aeeecb; margin: 6px 0 0 0; font-size: 14px;">Real-Time Spot Prices &amp; Satellite Telemetry Intelligence</p>
@@ -137,7 +137,7 @@ router.post('/', async (req, res) => {
                     <td style="padding: 32px 32px 24px;">
                       <h2 style="color: #012d1d; margin: 0 0 12px 0; font-size: 20px; font-weight: 700;">Hello ${recipientName},</h2>
                       <p style="color: #414844; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">
-                        Thank you for subscribing to <strong>AgriPulse AI Mandi Volatility Alerts</strong>. You are now connected to India's premier agricultural spot market machine learning network.
+                        Thank you for subscribing to <strong>AgriCast AI Mandi Volatility Alerts</strong>. You are now connected to India's premier agricultural spot market machine learning network.
                       </p>
                       <p style="color: #414844; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
                         You will receive daily automated price trend summaries, satellite vegetation scans (Sentinel-2 NDVI), and APMC Mandi exchange volatility warnings.
@@ -174,7 +174,7 @@ router.post('/', async (req, res) => {
                   <tr>
                     <td style="background-color: #f8faf9; border-top: 1px solid #e1e8e4; padding: 20px 32px; text-align: center;">
                       <p style="color: #717973; font-size: 12px; margin: 0 0 6px 0; font-weight: 600;">
-                        AgriPulse AI Agricultural Intelligence Platform
+                        AgriCast AI Agricultural Intelligence Platform
                       </p>
                       <p style="color: #94a3b8; font-size: 11px; margin: 0;">
                         APMC Mandi Spot Exchange Network • Sentinel-2 Orbit Telemetry
@@ -228,19 +228,19 @@ router.post('/contact', async (req, res) => {
   try {
     const transporter = await createTransporter();
     const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'dhruvilthummar37@gmail.com';
-    const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriPulse Support" <${fromAddress}>`;
+    const formattedFrom = fromAddress.includes('<') ? fromAddress : `"AgriCast Support" <${fromAddress}>`;
 
     const mailOptions = {
       from: formattedFrom,
       to: email,
-      subject: `📩 [Received] ${msgSubject} - AgriPulse AI Support`,
+      subject: `📩 [Received] ${msgSubject} - AgriCast AI Support`,
       html: `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>AgriPulse Inquiry Confirmation</title>
+          <title>AgriCast Inquiry Confirmation</title>
         </head>
         <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
@@ -264,7 +264,7 @@ router.post('/contact', async (req, res) => {
                     <td style="padding: 32px 32px 24px;">
                       <h2 style="color: #012d1d; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">Hello ${senderName},</h2>
                       <p style="color: #414844; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-                        Thank you for reaching out to AgriPulse AI Technical Support. We have logged your request regarding <strong>"${msgSubject}"</strong> and routed it to our engineering and Mandi telemetry team.
+                        Thank you for reaching out to AgriCast AI Technical Support. We have logged your request regarding <strong>"${msgSubject}"</strong> and routed it to our engineering and Mandi telemetry team.
                       </p>
 
                       <!-- Message Copy Box -->
@@ -287,7 +287,7 @@ router.post('/contact', async (req, res) => {
                   <tr>
                     <td style="background-color: #f8faf9; border-top: 1px solid #e1e8e4; padding: 20px 32px; text-align: center;">
                       <p style="color: #717973; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">
-                        AgriPulse AI Engineering Support Desk
+                        AgriCast AI Engineering Support Desk
                       </p>
                       <p style="color: #94a3b8; font-size: 11px; margin: 0;">
                         APMC Commodity Telemetry • Node.js BFF Gateway

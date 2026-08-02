@@ -97,7 +97,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.get(['/health', '/api/v1/health'], (req, res) => {
   res.status(200).json({
     status: 'HEALTHY',
-    service: 'AgriPulse AI BFF Backend Gateway',
+    service: 'AgriCast AI BFF Backend Gateway',
     version: '2.4.0',
     // DJANGO_SERVICE_URL: from .env — the URL of the Django predict microservice
     target_django_service: process.env.DJANGO_SERVICE_URL || 'http://127.0.0.1:8000',

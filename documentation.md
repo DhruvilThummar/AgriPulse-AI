@@ -1,4 +1,4 @@
-# 🌾 AgriPulse AI — End-to-End Technical Documentation
+# 🌾 AgriCast AI — End-to-End Technical Documentation
 
 > **Comprehensive Technical Specification, Architecture Manual & API Guide**  
 > *Real-time agricultural commodity price intelligence powered by live web scraping, advanced Scikit-Learn ML models, Pandas data wrangling, and a three-tier microservice architecture.*
@@ -37,7 +37,7 @@
 
 ## 1. System Overview
 
-**AgriPulse AI** is an enterprise-grade agricultural intelligence and commodity market prediction platform designed for Indian farmers, agricultural traders, APMC Mandi stakeholders, and agribusiness managers.
+**AgriCast AI** is an enterprise-grade agricultural intelligence and commodity market prediction platform designed for Indian farmers, agricultural traders, APMC Mandi stakeholders, and agribusiness managers.
 
 ### Core Capabilities
 - **Live Spot Price Scraping**: Real-time aggregation of APMC Mandi prices and international commodity benchmarks.

@@ -96,7 +96,7 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AgriPulse OTP Verification</title>
+        <title>AgriCast OTP Verification</title>
       </head>
       <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
@@ -110,7 +110,7 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
                     <div style="display: inline-block; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 20px; padding: 6px 14px; margin-bottom: 12px;">
                       <span style="color: #34d399; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">🔒 Account Verification</span>
                     </div>
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">AgriPulse AI Verification Code</h1>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">AgriCast AI Verification Code</h1>
                   </td>
                 </tr>
 
@@ -119,7 +119,7 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
                   <td style="padding: 32px 32px 24px;">
                     <h2 style="color: #012d1d; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">Hello ${displayName},</h2>
                     <p style="color: #414844; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-                      Please use the following 6-digit One-Time Password (OTP) code to authenticate your AgriPulse AI account session. This code is valid for <strong>5 minutes</strong>.
+                      Please use the following 6-digit One-Time Password (OTP) code to authenticate your AgriCast AI account session. This code is valid for <strong>5 minutes</strong>.
                     </p>
 
                     <!-- Glowing OTP Code Box -->
@@ -128,7 +128,7 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
                     </div>
 
                     <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">
-                      If you did not request this verification code, please ignore this email or notify security@agripulse.ai.
+                      If you did not request this verification code, please ignore this email or notify security@agricast.ai.
                     </p>
                   </td>
                 </tr>
@@ -137,7 +137,7 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
                 <tr>
                   <td style="background-color: #f8faf9; border-top: 1px solid #e1e8e4; padding: 20px 32px; text-align: center;">
                     <p style="color: #717973; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">
-                      AgriPulse AI Security &amp; Identity Gateway
+                      AgriCast AI Security &amp; Identity Gateway
                     </p>
                     <p style="color: #94a3b8; font-size: 11px; margin: 0;">
                       Automated System Dispatch — Do Not Reply Directly

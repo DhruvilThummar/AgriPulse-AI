@@ -496,7 +496,7 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--clr-on-surface)', fontWeight: 700, fontSize: '16px' }}>
                   <span className="material-symbols-outlined icon-filled" style={{ color: 'var(--clr-primary)', fontSize: '24px' }}>monitoring</span>
-                  AgriPulse AI Platform
+                  AgriCast AI Platform
                 </div>
                 <p style={{ fontSize: '11px', lineHeight: '1.6', margin: 0, color: 'var(--clr-on-surface-variant)' }}>
                   State-of-the-art dual-model ensemble intelligence combining Logistic Regression &amp; CatBoost decision trees for precision agricultural Mandi forecasting.
@@ -620,7 +620,7 @@ export default function App() {
               gap: '12px',
               fontSize: '11px'
             }}>
-              <div>© 2026 AgriPulse AI Agricultural Intelligence. All rights reserved.</div>
+              <div>© 2026 AgriCast AI Agricultural Intelligence. All rights reserved.</div>
               <div style={{ display: 'flex', gap: '16px', color: 'var(--clr-outline)' }}>
                 <Link to="/privacy-policy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy Policy</Link>
                 <Link to="/contact" style={{ color: 'inherit', textDecoration: 'none' }}>Contact Technical Desk</Link>

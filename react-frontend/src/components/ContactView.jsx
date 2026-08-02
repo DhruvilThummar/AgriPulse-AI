@@ -57,7 +57,7 @@ export default function ContactView({ showToast }) {
           Nodemailer Dispatch Active
         </span>
         <h1 style={{ fontSize: 'clamp(28px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '12px' }}>
-          Contact AgriPulse Support &amp; Technical Desk
+          Contact AgriCast Support &amp; Technical Desk
         </h1>
         <p style={{ maxWidth: '600px', margin: '0 auto', fontSize: '15px', color: 'var(--clr-on-surface-variant)', lineHeight: '1.6' }}>
           Have questions regarding our Scikit-Learn predictive engine, APMC Mandi feeds, or enterprise API access? Send us a message below.
@@ -81,7 +81,7 @@ export default function ContactView({ showToast }) {
               </div>
               <div>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--clr-outline)', fontWeight: 600 }}>Support Email Desk</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-on-surface)' }}>support@agripulse.ai</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-on-surface)' }}>support@agricast.ai</div>
               </div>
             </div>
 

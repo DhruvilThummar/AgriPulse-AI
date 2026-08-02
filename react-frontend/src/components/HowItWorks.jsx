@@ -50,11 +50,11 @@ export default function HowItWorks() {
 
   const faqs = [
     {
-      q: 'How does AgriPulse AI achieve 83.79% forecast accuracy?',
+      q: 'How does AgriCast AI achieve 83.79% forecast accuracy?',
       a: 'We train our Scikit-Learn Gradient Boosting Decision Trees on 100,000 multi-variate historical records, cross-referencing real-time spot prices with satellite vegetation indices and transit freight surcharges.'
     },
     {
-      q: 'Can I connect AgriPulse AI predictions to external ERP or Mandi software?',
+      q: 'Can I connect AgriCast AI predictions to external ERP or Mandi software?',
       a: 'Yes, our Backend-for-Frontend Node.js REST API exposes secure JSON endpoints (/api/v1/predict and /api/v1/commodities) secured via JWT token authentication.'
     },
     {
@@ -75,7 +75,7 @@ export default function HowItWorks() {
           Platform Architecture &amp; ML Workflow
         </span>
         <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '16px' }}>
-          How AgriPulse AI Predicts Mandi Trends
+          How AgriCast AI Predicts Mandi Trends
         </h1>
         <p style={{ maxWidth: '680px', margin: '0 auto', fontSize: '16px', color: 'var(--clr-on-surface-variant)', lineHeight: '1.6' }}>
           Explore the technology behind our dual-intelligence machine learning ensemble engine combining Scikit-Learn GBDT classifiers, real-time APMC Mandi web scraping, and macro freight signals.

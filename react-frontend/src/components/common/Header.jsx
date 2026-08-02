@@ -36,7 +36,7 @@ export default function Header({
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
         >
           <span className="material-symbols-outlined icon-filled" style={{ fontSize: '26px', color: 'var(--clr-primary)' }}>monitoring</span>
-          AgriPulse AI
+          AgriCast AI
         </button>
 
         {user && (
