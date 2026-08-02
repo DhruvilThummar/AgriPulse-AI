@@ -72,20 +72,20 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
   const displayName = name ? name.trim() : email.split('@')[0];
 
   // Format sender name and email
-  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@agripulse.ai';
-  const formattedFrom = fromEmail.includes('<') ? fromEmail : `"AgriPulse AI" <${fromEmail}>`;
+  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@agricast.ai';
+  const formattedFrom = fromEmail.includes('<') ? fromEmail : `"AgriCast AI" <${fromEmail}>`;
 
   // ── Build the Email Content ──
   // mailOptions: The full configuration for the email to be sent.
   const mailOptions = {
-    // from: The sender name "AgriPulse AI" and email address shown in the recipient's inbox
+    // from: The sender name "AgriCast AI" and email address shown in the recipient's inbox
     from: formattedFrom,
 
     // to: The recipient's email address (the user who just registered)
     to: email,
 
     // subject: The subject line of the email
-    subject: `AgriPulse AI — Verification Code for ${displayName}`,
+    subject: `AgriCast AI — Verification Code for ${displayName}`,
 
     // html: The email body as HTML markup.
     // Using a template literal (`...`) so we can embed the otpCode and displayName variables directly.
