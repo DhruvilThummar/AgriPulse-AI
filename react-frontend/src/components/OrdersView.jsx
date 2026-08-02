@@ -174,6 +174,24 @@ export default function OrdersView({ showToast, autoSync }) {
   const [backendPredictions, setBackendPredictions] = useState({});
   const [showLogBot, setShowLogBot] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "AI Alert: Cotton tomorrow forecast has high volatility risk (89%).", time: "2m ago", unread: true },
+    { id: 2, text: "Satellite Re-sync: Sentinel-2 telemetry updated successfully.", time: "10m ago", unread: false },
+    { id: 3, text: "System Audit: Model log core is online.", time: "1h ago", unread: false }
+  ]);
+
+  const markNotificationAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+  };
+  const clearNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
 
   // Local simulated predictions & logs
   const [predictionsLog, setPredictionsLog] = useState([
@@ -694,15 +712,17 @@ export default function OrdersView({ showToast, autoSync }) {
               title="Toggle AI Stock Alerts"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>notifications</span>
-              <span style={{
-                position: 'absolute',
-                top: '2px',
-                right: '2px',
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: 'var(--clr-error)'
-              }} />
+              {(notifications || []).some(n => n?.unread) && (
+                <span className="pulse-badge-red" style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: 'var(--clr-error)'
+                }} />
+              )}
             </button>
 
             {/* Notifications Dropdown inside stock view */}
@@ -711,7 +731,7 @@ export default function OrdersView({ showToast, autoSync }) {
                 position: 'absolute',
                 top: '36px',
                 left: '0',
-                width: '300px',
+                width: '320px',
                 background: 'var(--clr-surface-container-lowest)',
                 border: '1px solid var(--clr-outline-variant)',
                 borderRadius: '12px',
@@ -720,21 +740,72 @@ export default function OrdersView({ showToast, autoSync }) {
                 padding: '12px',
                 textAlign: 'left'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--clr-outline-variant)', paddingBottom: '8px', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--clr-on-surface)' }}>
-                  <span>Notifications</span>
-                  <span style={{ fontSize: '10px', color: 'var(--clr-secondary)' }}>3 New Alerts</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--clr-outline-variant)', paddingBottom: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: '700', fontSize: '12px', color: 'var(--clr-on-surface)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    Alerts
+                    {(notifications || []).filter(n => n?.unread).length > 0 && (
+                      <span style={{ fontSize: '10px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', padding: '2px 6px', borderRadius: '10px' }}>
+                        {(notifications || []).filter(n => n?.unread).length} new
+                      </span>
+                    )}
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {notifications.length > 0 && (
+                      <>
+                        <button onClick={markAllNotificationsAsRead} style={{ background: 'none', border: 'none', color: 'var(--clr-secondary)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
+                        <button onClick={clearAllNotifications} style={{ background: 'none', border: 'none', color: 'var(--clr-error)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Clear all</button>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { id: 1, text: "AI Alert: Cotton tomorrow forecast has high volatility risk (89%).", time: "2m ago", unread: true },
-                    { id: 2, text: "Satellite Re-sync: Sentinel-2 telemetry updated successfully.", time: "10m ago", unread: false },
-                    { id: 3, text: "System Audit: Model log core is online.", time: "1h ago", unread: false }
-                  ].map(n => (
-                    <div key={n.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px', borderRadius: '6px', background: n.unread ? 'rgba(52, 211, 153, 0.05)' : 'transparent', borderBottom: '1px solid var(--clr-outline-variant)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--clr-on-surface)', fontWeight: n.unread ? '700' : '500' }}>{n.text}</div>
-                      <div style={{ fontSize: '9px', color: 'var(--clr-outline)' }}>{n.time}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '20px 8px', textAlign: 'center', color: 'var(--clr-outline)', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '22px', color: 'var(--clr-outline-variant)' }}>notifications_off</span>
+                      <span>No stock alerts at the moment.</span>
                     </div>
-                  ))}
+                  ) : (
+                    (notifications || []).map(n => (
+                      <div key={n.id} style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        background: n.unread ? 'rgba(52, 211, 153, 0.05)' : 'transparent',
+                        borderLeft: n.unread ? '3px solid var(--clr-secondary)' : '3px solid transparent',
+                        borderBottom: '1px solid var(--clr-outline-variant)',
+                        transition: 'background 0.2s'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                          <div style={{ fontSize: '11px', color: 'var(--clr-on-surface)', fontWeight: n.unread ? '700' : '500', lineHeight: 1.3 }}>{n.text}</div>
+                          <div style={{ fontSize: '9px', color: 'var(--clr-outline)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>schedule</span>
+                            {n.time}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {n.unread && (
+                            <button
+                              onClick={() => markNotificationAsRead(n.id)}
+                              style={{ background: 'none', border: 'none', color: 'var(--clr-secondary)', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                              title="Mark as read"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => clearNotification(n.id)}
+                            style={{ background: 'none', border: 'none', color: 'var(--clr-outline)', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                            title="Dismiss"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

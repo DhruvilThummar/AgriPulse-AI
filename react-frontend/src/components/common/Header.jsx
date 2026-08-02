@@ -20,7 +20,11 @@ export default function Header({
   handleLogout,
   setShowAuthModal,
   showToast,
-  headerNavItems = []
+  headerNavItems = [],
+  markNotificationAsRead,
+  clearNotification,
+  markAllNotificationsAsRead,
+  clearAllNotifications
 }) {
   return (
     <header className="top-header">
@@ -133,7 +137,7 @@ export default function Header({
             >
               <span className="material-symbols-outlined">notifications</span>
               {(notifications || []).some(n => n?.unread) && (
-                <span style={{
+                <span className="pulse-badge-red" style={{
                   position: 'absolute',
                   top: '2px',
                   right: '2px',
@@ -166,7 +170,7 @@ export default function Header({
                 position: 'absolute',
                 top: '56px',
                 right: '80px',
-                width: '300px',
+                width: '320px',
                 background: 'var(--clr-surface-container-lowest)',
                 border: '1px solid var(--clr-outline-variant)',
                 borderRadius: '12px',
@@ -174,19 +178,72 @@ export default function Header({
                 zIndex: 10000,
                 padding: '12px'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--clr-outline-variant)', paddingBottom: '8px', marginBottom: '8px', fontWeight: 'bold', fontSize: '12px', color: 'var(--clr-on-surface)' }}>
-                  <span>Notifications</span>
-                  <span style={{ fontSize: '10px', color: 'var(--clr-secondary)' }}>
-                    {(notifications || []).filter(n => n?.unread).length} New Alerts
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--clr-outline-variant)', paddingBottom: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: '700', fontSize: '13px', color: 'var(--clr-on-surface)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    Notifications
+                    {(notifications || []).filter(n => n?.unread).length > 0 && (
+                      <span style={{ fontSize: '10px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', padding: '2px 6px', borderRadius: '10px' }}>
+                        {(notifications || []).filter(n => n?.unread).length} new
+                      </span>
+                    )}
                   </span>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {notifications.length > 0 && (
+                      <>
+                        <button onClick={markAllNotificationsAsRead} style={{ background: 'none', border: 'none', color: 'var(--clr-secondary)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Mark all read</button>
+                        <button onClick={clearAllNotifications} style={{ background: 'none', border: 'none', color: 'var(--clr-error)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Clear all</button>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(notifications || []).map(n => (
-                    <div key={n.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px', borderRadius: '6px', background: n.unread ? 'rgba(52, 211, 153, 0.05)' : 'transparent', borderBottom: '1px solid var(--clr-outline-variant)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--clr-on-surface)', fontWeight: n.unread ? '700' : '500' }}>{n.text}</div>
-                      <div style={{ fontSize: '9px', color: 'var(--clr-outline)' }}>{n.time}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--clr-outline)', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--clr-outline-variant)' }}>notifications_off</span>
+                      <span>All caught up! No notifications.</span>
                     </div>
-                  ))}
+                  ) : (
+                    (notifications || []).map(n => (
+                      <div key={n.id} style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        background: n.unread ? 'rgba(52, 211, 153, 0.05)' : 'transparent',
+                        borderLeft: n.unread ? '3px solid var(--clr-secondary)' : '3px solid transparent',
+                        borderBottom: '1px solid var(--clr-outline-variant)',
+                        transition: 'background 0.2s'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                          <div style={{ fontSize: '11px', color: 'var(--clr-on-surface)', fontWeight: n.unread ? '700' : '500', lineHeight: 1.3 }}>{n.text}</div>
+                          <div style={{ fontSize: '9px', color: 'var(--clr-outline)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>schedule</span>
+                            {n.time}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {n.unread && (
+                            <button
+                              onClick={() => markNotificationAsRead(n.id)}
+                              style={{ background: 'none', border: 'none', color: 'var(--clr-secondary)', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                              title="Mark as read"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => clearNotification(n.id)}
+                            style={{ background: 'none', border: 'none', color: 'var(--clr-outline)', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                            title="Dismiss"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

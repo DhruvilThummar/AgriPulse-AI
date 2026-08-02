@@ -237,6 +237,20 @@ export default function App() {
 
   const showSidebar = user && !['/', '/how-it-works', '/privacy-policy', '/contact'].includes(location.pathname);
 
+  // Notification action handlers
+  const markNotificationAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+  };
+  const clearNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
   return (
     <>
       {/* ── Fixed Top Header ── */}
@@ -261,6 +275,10 @@ export default function App() {
         setShowAuthModal={setShowAuthModal}
         showToast={showToast}
         headerNavItems={headerNavItems}
+        markNotificationAsRead={markNotificationAsRead}
+        clearNotification={clearNotification}
+        markAllNotificationsAsRead={markAllNotificationsAsRead}
+        clearAllNotifications={clearAllNotifications}
       />
 
       {/* Settings Modal */}

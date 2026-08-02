@@ -3,7 +3,7 @@
    Matching Figma / Stitch: "Agri-Predict Analytics"
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Edu+VIC+WA+NT+Hand+Pre:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Edu+VIC+WA+NT+Hand+Pre:wght@400..700&family=Germania+One&family=JetBrains+Mono:wght@400;500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 /* ─── CSS Custom Properties ─── */
@@ -167,6 +167,12 @@ a:hover { color: var(--clr-primary); }
   font-family: var(--font-mono);
   font-size: var(--txt-mono);
   line-height: 18px;
+}
+
+.germania-one-regular {
+  font-family: "Germania One", system-ui;
+  font-weight: 400;
+  font-style: normal;
 }
 
 /* ─── Material Symbols ─── */
@@ -352,32 +358,79 @@ a:hover { color: var(--clr-primary); }
   gap: var(--space-md);
   padding: var(--space-md);
   margin-bottom: var(--space-md);
+  transition: transform 0.2s ease;
+}
+.sidebar-brand-block:hover {
+  transform: translateY(-1px);
 }
 
 .sidebar-logo-box {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-lg);
-  background: var(--clr-primary);
+  background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-primary-container) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--clr-on-primary);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(1, 45, 29, 0.15);
 }
 
 .sidebar-brand-text .brand-title {
-  font-size: var(--txt-title-lg);
+  font-size: 16px;
   font-weight: 700;
   color: var(--clr-primary);
-  line-height: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .sidebar-brand-text .brand-sub {
-  font-size: var(--txt-label-md);
+  font-size: 11px;
   color: var(--clr-on-surface-variant);
+  margin-top: 2px;
+}
+
+/* Animations for pulsing status indicators */
+@keyframes pulse-glowing-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(52, 211, 153, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+  }
+}
+
+@keyframes pulse-glowing-red {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.7);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px rgba(186, 26, 26, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(186, 26, 26, 0);
+  }
+}
+
+.pulse-badge-red {
+  animation: pulse-glowing-red 2s infinite;
+}
+
+.pulse-dot-green {
+  animation: pulse-glowing-green 2s infinite;
 }
 
 .sidebar-new-trade {

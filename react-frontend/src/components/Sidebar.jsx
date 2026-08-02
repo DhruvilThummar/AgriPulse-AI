@@ -23,7 +23,16 @@ export default function Sidebar({ user, onLogout }) {
           <div className="sidebar-logo-box">CT</div>
           <div className="sidebar-brand-text">
             <div className="brand-title">Commodity Terminal</div>
-            <div className="brand-sub">AI Insights Active</div>
+            <div className="brand-sub" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="pulse-dot-green" style={{
+                display: 'inline-block',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#34d399'
+              }} />
+              AI Insights Active
+            </div>
           </div>
         </div>
       </Link>
