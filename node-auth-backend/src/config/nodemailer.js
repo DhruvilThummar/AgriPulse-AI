@@ -98,7 +98,7 @@ const sendOtpEmail = async (email, otpCode, name = '') => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AgriPulse OTP Verification</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+      <body style="margin: 0; padding: 0; background-color: #f4f6f5; font-family: 'Edu VIC WA NT Hand Pre', cursive, sans-serif;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f5; padding: 40px 16px;">
           <tr>
             <td align="center">
