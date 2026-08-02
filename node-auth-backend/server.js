@@ -180,3 +180,5 @@ const startServer = async () => {
 
 // Call the startup function — this kicks everything off
 startServer();
+
+module.exports = app;
