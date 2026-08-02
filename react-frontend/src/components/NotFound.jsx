@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AGRI_JOKES = [
@@ -55,20 +55,54 @@ const SCANNING_LOCATIONS = [
   'UP-Sugarcane-Mill-Network'
 ];
 
+const CROP_PREDICTOR_PRESETS = {
+  wheat: { name: 'Wheat (Grade A)', basePrice: 2450, trend: 'UP', conf: 89, color: '#10b981' },
+  cotton: { name: 'Shankar-6 Cotton', basePrice: 7200, trend: 'UP', conf: 92, color: '#059669' },
+  rice: { name: 'Basmati Rice', basePrice: 6850, trend: 'UP', conf: 86, color: '#3b82f6' },
+  chilli: { name: 'Guntur Chilli', basePrice: 9400, trend: 'DOWN', conf: 78, color: '#ef4444' }
+};
+
+// Simple Web Audio API Synth Sound Generator for delight
+const playSynthSound = (freq = 587.33, type = 'sine') => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch (e) {
+    // Ignore audio restrictions
+  }
+};
+
 export default function NotFound({ showToast }) {
   const navigate = useNavigate();
   const [jokeIndex, setJokeIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [burstParticles, setBurstParticles] = useState([]);
-  
-  // Interactive Mandi Radar Scan Simulation
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Mini Interactive Predictor Game State
+  const [miniCrop, setMiniCrop] = useState('wheat');
+  const [miniPrice, setMiniPrice] = useState('2450');
+  const [miniPredicting, setMiniPredicting] = useState(false);
+  const [miniResult, setMiniResult] = useState(null);
+
+  // Mandi Radar Scanner Loop State
   const [scanLocation, setScanLocation] = useState(SCANNING_LOCATIONS[0]);
   const [scanProgress, setScanProgress] = useState(0);
 
   useEffect(() => {
     document.title = "404 — Page Harvested Early | AgriCast AI";
 
-    // Radar Location Switcher Loop
     const scanInterval = setInterval(() => {
       setScanLocation(SCANNING_LOCATIONS[Math.floor(Math.random() * SCANNING_LOCATIONS.length)]);
       setScanProgress(prev => (prev >= 100 ? 0 : prev + 25));
@@ -78,15 +112,15 @@ export default function NotFound({ showToast }) {
   }, []);
 
   const handleNextJoke = (e) => {
+    if (soundEnabled) playSynthSound(659.25, 'sine');
     setAnimating(true);
 
-    // Generate Floating Emoji Blast Particles
     const rect = e.currentTarget.getBoundingClientRect();
-    const newParticles = Array.from({ length: 8 }).map((_, i) => ({
+    const newParticles = Array.from({ length: 10 }).map((_, i) => ({
       id: Date.now() + i,
-      x: rect.left + rect.width / 2 + (Math.random() * 80 - 40),
+      x: rect.left + rect.width / 2 + (Math.random() * 100 - 50),
       y: rect.top + (Math.random() * 20 - 10),
-      emoji: ['🌾', '🚜', '🌽', '🤖', '✨', '⚡', '🎉', '🍅'][i % 8]
+      emoji: ['🌾', '🚜', '🌽', '🤖', '✨', '⚡', '🎉', '🍅', '🚀', '💡'][i % 10]
     }));
 
     setBurstParticles(newParticles);
@@ -98,11 +132,36 @@ export default function NotFound({ showToast }) {
     }, 180);
   };
 
+  const handleRunMiniPrediction = () => {
+    if (soundEnabled) playSynthSound(880, 'triangle');
+    setMiniPredicting(true);
+    setMiniResult(null);
+
+    setTimeout(() => {
+      const preset = CROP_PREDICTOR_PRESETS[miniCrop];
+      const userP = Number(miniPrice) || preset.basePrice;
+      const changePct = (Math.random() * 4 + 1).toFixed(2);
+      const isUp = preset.trend === 'UP';
+      const targetP = Math.round(isUp ? userP * (1 + changePct / 100) : userP * (1 - changePct / 100));
+
+      setMiniResult({
+        cropName: preset.name,
+        currentPrice: userP,
+        predictedPrice: targetP,
+        changePct,
+        trend: preset.trend,
+        confidence: preset.conf + Math.floor(Math.random() * 5)
+      });
+      setMiniPredicting(false);
+      if (showToast) showToast(`Mini AI Prediction computed for ${preset.name}!`, 'success');
+    }, 700);
+  };
+
   const currentJoke = AGRI_JOKES[jokeIndex];
 
   return (
     <div style={{
-      minHeight: '85vh',
+      minHeight: '88vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -117,11 +176,11 @@ export default function NotFound({ showToast }) {
       <style>{`
         @keyframes floatSlow1 {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-16px) rotate(6deg); }
+          50% { transform: translateY(-18px) rotate(6deg); }
         }
         @keyframes floatSlow2 {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-22px) rotate(-8deg); }
+          50% { transform: translateY(-24px) rotate(-8deg); }
         }
         @keyframes tractorBounce {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -133,14 +192,9 @@ export default function NotFound({ showToast }) {
           70% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
           100% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
-        @keyframes borderShimmer {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
         @keyframes particleBurst {
           0% { opacity: 1; transform: translateY(0px) scale(0.8); }
-          100% { opacity: 0; transform: translateY(-60px) scale(1.4); }
+          100% { opacity: 0; transform: translateY(-70px) scale(1.5); }
         }
         @keyframes gearSpin {
           from { transform: rotate(0deg); }
@@ -163,33 +217,33 @@ export default function NotFound({ showToast }) {
       `}</style>
 
       {/* ── Background Floating Crop Elements ── */}
-      <div style={{ position: 'absolute', top: '8%', left: '8%', fontSize: '32px', opacity: 0.25, animation: 'floatSlow1 6s infinite ease-in-out', pointerEvents: 'none' }}>🌾</div>
-      <div style={{ position: 'absolute', top: '15%', right: '10%', fontSize: '38px', opacity: 0.25, animation: 'floatSlow2 7s infinite ease-in-out', pointerEvents: 'none' }}>🚜</div>
-      <div style={{ position: 'absolute', bottom: '20%', left: '12%', fontSize: '36px', opacity: 0.2, animation: 'floatSlow2 8s infinite ease-in-out', pointerEvents: 'none' }}>🌽</div>
-      <div style={{ position: 'absolute', bottom: '15%', right: '12%', fontSize: '34px', opacity: 0.2, animation: 'floatSlow1 6.5s infinite ease-in-out', pointerEvents: 'none' }}>🛰️</div>
-      <div style={{ position: 'absolute', top: '45%', right: '5%', fontSize: '28px', opacity: 0.18, animation: 'floatSlow1 5.5s infinite ease-in-out', pointerEvents: 'none' }}>🤖</div>
-      <div style={{ position: 'absolute', top: '50%', left: '4%', fontSize: '30px', opacity: 0.18, animation: 'floatSlow2 7.5s infinite ease-in-out', pointerEvents: 'none' }}>📊</div>
+      <div style={{ position: 'absolute', top: '6%', left: '8%', fontSize: '34px', opacity: 0.25, animation: 'floatSlow1 6s infinite ease-in-out', pointerEvents: 'none' }}>🌾</div>
+      <div style={{ position: 'absolute', top: '12%', right: '9%', fontSize: '40px', opacity: 0.25, animation: 'floatSlow2 7s infinite ease-in-out', pointerEvents: 'none' }}>🚜</div>
+      <div style={{ position: 'absolute', bottom: '18%', left: '10%', fontSize: '38px', opacity: 0.2, animation: 'floatSlow2 8s infinite ease-in-out', pointerEvents: 'none' }}>🌽</div>
+      <div style={{ position: 'absolute', bottom: '12%', right: '10%', fontSize: '36px', opacity: 0.2, animation: 'floatSlow1 6.5s infinite ease-in-out', pointerEvents: 'none' }}>🛰️</div>
+      <div style={{ position: 'absolute', top: '42%', right: '4%', fontSize: '30px', opacity: 0.18, animation: 'floatSlow1 5.5s infinite ease-in-out', pointerEvents: 'none' }}>🤖</div>
+      <div style={{ position: 'absolute', top: '48%', left: '3%', fontSize: '32px', opacity: 0.18, animation: 'floatSlow2 7.5s infinite ease-in-out', pointerEvents: 'none' }}>📊</div>
 
       {/* Background Ambient Color Orbs */}
       <div style={{
         position: 'absolute',
-        top: '12%',
-        left: '20%',
-        width: '380px',
-        height: '380px',
+        top: '10%',
+        left: '18%',
+        width: '400px',
+        height: '400px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
       <div style={{
         position: 'absolute',
-        bottom: '12%',
-        right: '20%',
-        width: '400px',
-        height: '400px',
+        bottom: '10%',
+        right: '18%',
+        width: '420px',
+        height: '420px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
@@ -200,7 +254,7 @@ export default function NotFound({ showToast }) {
           position: 'fixed',
           left: p.x,
           top: p.y,
-          fontSize: '22px',
+          fontSize: '24px',
           pointerEvents: 'none',
           zIndex: 99999,
           animation: 'particleBurst 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) forwards'
@@ -211,12 +265,38 @@ export default function NotFound({ showToast }) {
 
       {/* Main Content Container */}
       <div style={{
-        maxWidth: '880px',
+        maxWidth: '900px',
         width: '100%',
         position: 'relative',
         zIndex: 1,
         textAlign: 'center'
       }}>
+        {/* Sound FX Toggle Pill */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <button
+            onClick={() => setSoundEnabled(prev => !prev)}
+            style={{
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              border: '1px solid var(--clr-outline-variant)',
+              background: 'var(--clr-surface-container-lowest)',
+              color: 'var(--clr-on-surface-variant)',
+              fontSize: '10px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            title="Toggle Sound Effects"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
+              {soundEnabled ? 'volume_up' : 'volume_off'}
+            </span>
+            Sound {soundEnabled ? 'ON' : 'OFF'}
+          </button>
+        </div>
+
         {/* Animated Tractor Header Graphic */}
         <div style={{
           display: 'inline-flex',
@@ -226,7 +306,7 @@ export default function NotFound({ showToast }) {
           borderRadius: '9999px',
           background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(245, 158, 11, 0.18) 100%)',
           border: '1px solid rgba(245, 158, 11, 0.35)',
-          marginBottom: '22px',
+          marginBottom: '20px',
           boxShadow: '0 6px 18px rgba(245, 158, 11, 0.2)'
         }}>
           <span style={{ fontSize: '26px', display: 'inline-block', animation: 'tractorBounce 2s infinite ease-in-out' }}>
@@ -261,7 +341,7 @@ export default function NotFound({ showToast }) {
         <p style={{
           fontSize: '15px',
           color: 'var(--clr-on-surface-variant)',
-          maxWidth: '660px',
+          maxWidth: '680px',
           margin: '0 auto 24px auto',
           lineHeight: 1.6
         }}>
@@ -301,7 +381,7 @@ export default function NotFound({ showToast }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '100px', height: '6px', borderRadius: '9999px', background: 'var(--clr-surface-container-high, #e5e7eb)', overflow: 'hidden' }}>
+            <div style={{ width: '110px', height: '6px', borderRadius: '9999px', background: 'var(--clr-surface-container-high, #e5e7eb)', overflow: 'hidden' }}>
               <div style={{ width: `${scanProgress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)', transition: 'width 0.4s ease' }} />
             </div>
             <span style={{ color: 'var(--clr-error)', fontWeight: 700 }}>
@@ -318,13 +398,13 @@ export default function NotFound({ showToast }) {
           border: '1px solid rgba(1, 45, 29, 0.15)',
           borderRadius: '20px',
           padding: '26px 30px',
-          marginBottom: '32px',
+          marginBottom: '28px',
           boxShadow: '0 12px 36px rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.5) 0px 0px 0px 1px inset',
           textAlign: 'left',
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Subtle Top Gradient Accent */}
+          {/* Top Gradient Accent */}
           <div style={{
             position: 'absolute',
             top: 0,
@@ -366,15 +446,19 @@ export default function NotFound({ showToast }) {
                 fontSize: '11px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '6px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                lineHeight: 1,
                 boxShadow: '0 4px 12px rgba(1, 45, 29, 0.25)'
               }}
               title="Click for another agricultural joke!"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>auto_awesome</span>
-              Tell Me Another Joke!
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>auto_awesome</span>
+              <span style={{ lineHeight: 1, display: 'inline-block' }}>Tell Me Another Joke!</span>
             </button>
           </div>
 
@@ -401,6 +485,110 @@ export default function NotFound({ showToast }) {
               💡 {currentJoke.punchline}
             </div>
           </div>
+        </div>
+
+        {/* ── Interactive Mini ML Predictor Game Widget ── */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(16px)',
+          border: '1px dashed rgba(16, 185, 129, 0.4)',
+          borderRadius: '20px',
+          padding: '22px 26px',
+          marginBottom: '32px',
+          textAlign: 'left',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '14px', color: 'var(--clr-primary)' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--clr-primary)', fontSize: '20px' }}>
+                sports_esports
+              </span>
+              <span>🎮 Try Instant 404 Mini AI Commodity Predictor</span>
+            </div>
+            <span style={{ fontSize: '10px', color: 'var(--clr-outline)', fontWeight: 600 }}>
+              Test ML model without leaving this page!
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', alignItems: 'end' }}>
+            <div>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--clr-outline)', display: 'block', marginBottom: '4px' }}>
+                SELECT CROP
+              </label>
+              <select
+                className="form-select"
+                value={miniCrop}
+                onChange={e => {
+                  setMiniCrop(e.target.value);
+                  setMiniPrice(String(CROP_PREDICTOR_PRESETS[e.target.value].basePrice));
+                }}
+                style={{ padding: '7px 10px', fontSize: '12px' }}
+              >
+                <option value="wheat">🌾 Wheat (Grade A)</option>
+                <option value="cotton">🧵 Shankar-6 Cotton</option>
+                <option value="rice">🍚 Basmati Rice</option>
+                <option value="chilli">🌶️ Guntur Chilli Red</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--clr-outline)', display: 'block', marginBottom: '4px' }}>
+                SPOT MANDI PRICE (₹/Qtl)
+              </label>
+              <input
+                type="number"
+                className="form-input"
+                value={miniPrice}
+                onChange={e => setMiniPrice(e.target.value)}
+                placeholder="e.g. 2450"
+                style={{ padding: '7px 10px', fontSize: '12px' }}
+              />
+            </div>
+
+            <button
+              onClick={handleRunMiniPrediction}
+              disabled={miniPredicting}
+              className="btn btn-primary btn-md animated-btn"
+              style={{
+                padding: '8px 16px',
+                fontSize: '12px',
+                fontWeight: 700,
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              {miniPredicting ? (
+                <><div className="spinner" style={{ width: '12px', height: '12px', borderTopColor: '#fff' }} /> Computing ML...</>
+              ) : (
+                <><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bolt</span>Run Mini Prediction</>
+              )}
+            </button>
+          </div>
+
+          {miniResult && (
+            <div style={{
+              marginTop: '14px',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: miniResult.trend === 'UP' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              border: `1px solid ${miniResult.trend === 'UP' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '12px',
+              fontFamily: 'var(--font-mono)'
+            }}>
+              <div>
+                <strong>{miniResult.cropName}:</strong> Predicted Tomorrow Price: <strong style={{ color: miniResult.trend === 'UP' ? '#059669' : '#dc2626' }}>₹{miniResult.predictedPrice}</strong> ({miniResult.trend === 'UP' ? `▲ +${miniResult.changePct}%` : `▼ -${miniResult.changePct}%`})
+              </div>
+              <span style={{ fontWeight: 700, color: miniResult.trend === 'UP' ? '#059669' : '#dc2626', background: 'rgba(255,255,255,0.8)', padding: '3px 8px', borderRadius: '6px' }}>
+                {miniResult.confidence}% Confidence
+              </span>
+            </div>
+          )}
         </div>
 
         {/* ── Feature Advertisement Spotlight Banner ── */}
@@ -521,7 +709,7 @@ export default function NotFound({ showToast }) {
             }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>smart_toy</span>
-            Run AI Price Prediction
+            Run Full AI Price Prediction
           </button>
 
           <button
