@@ -106,7 +106,7 @@
 | :--- | :--- | :--- | :--- |
 | **Frontend UI** | React | 18.2 | Single-page application framework |
 | **Build Tooling** | Vite | 4.4 | Fast asset bundler and dev server |
-| **Design System** | Custom Vanilla CSS | CSS3 | Light corporate system using "Edu VIC WA NT Hand Pre" & "Germania One" |
+| **Design System** | Custom Vanilla CSS | CSS3 | Light corporate system using "Outfit" & "Playfair Display" |
 | **BFF Gateway** | Node.js / Express | 4.18 | Gateway server handling Auth, API proxy, and state persistence |
 | **Database & ODM** | MongoDB & Mongoose | 7.3 | Document database storing users, OTPs, and prediction audit logs |
 | **Auth & Security** | JWT & Bcrypt.js | 9.0 / 2.4 | Token authentication (7-day TTL) and password encryption |
@@ -174,8 +174,8 @@
 ### UI Design System & Aesthetics
 - **Theme**: Light corporate styling system with glassmorphic cards and polished highlights.
 - **Typography**:
-  - **Primary Font**: `Edu VIC WA NT Hand Pre` (loaded via Google Fonts) for global text, layout components, and body copy.
-  - **Secondary / Branding Font**: `Germania One` (loaded via Google Fonts) for display typography, accessible via the `.germania-one-regular` helper class.
+  - **Primary Font**: `Outfit` (loaded via Google Fonts) for global text, layout components, and body copy.
+  - **Secondary / Branding Font**: `Playfair Display` (loaded via Google Fonts) for display typography, accessible via the `.playfair-display-regular` helper class.
 - **Key Interface Upgrades**:
   - **Pill-shaped Expanding Search Bar**: Features a vertically centered icon and smooth input resizing (from `200px` to `260px` width) with a glowing backdrop shadow on focus.
   - **Unified Notification System**: Synced global Header and local OrdersView panels that react dynamically to real-time events. Emits notification items on successful ML model predictions (Dashboard) and inventory updates (Orders/Quick Adjust/AI Liquidation). Supports toggling read states, deleting cards, and batch operations.
