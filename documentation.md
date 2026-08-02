@@ -106,7 +106,7 @@
 | :--- | :--- | :--- | :--- |
 | **Frontend UI** | React | 18.2 | Single-page application framework |
 | **Build Tooling** | Vite | 4.4 | Fast asset bundler and dev server |
-| **Design System** | Custom Vanilla CSS | CSS3 | Dark-mode glassmorphic design system |
+| **Design System** | Custom Vanilla CSS | CSS3 | Light corporate system using "Edu VIC WA NT Hand Pre" & "Germania One" |
 | **BFF Gateway** | Node.js / Express | 4.18 | Gateway server handling Auth, API proxy, and state persistence |
 | **Database & ODM** | MongoDB & Mongoose | 7.3 | Document database storing users, OTPs, and prediction audit logs |
 | **Auth & Security** | JWT & Bcrypt.js | 9.0 / 2.4 | Token authentication (7-day TTL) and password encryption |
@@ -172,9 +172,30 @@
 ## 5. Frontend Architecture & Features (`react-frontend`)
 
 ### UI Design System & Aesthetics
-- **Theme**: Dark-mode glassmorphism palette using CSS variables (`--bg-primary: #0a0d14`, `--card-bg: rgba(18, 24, 38, 0.75)`).
-- **Typography**: Inter / System sans-serif.
-- **Components**: `Dashboard.jsx`, `AnalyticsView.jsx`, `MarketsView.jsx`, `OrdersView.jsx`, `AuthModal.jsx`.
+- **Theme**: Light corporate styling system with glassmorphic cards and polished highlights.
+- **Typography**:
+  - **Primary Font**: `Edu VIC WA NT Hand Pre` (loaded via Google Fonts) for global text, layout components, and body copy.
+  - **Secondary / Branding Font**: `Germania One` (loaded via Google Fonts) for display typography, accessible via the `.germania-one-regular` helper class.
+- **Key Interface Upgrades**:
+  - **Pill-shaped Expanding Search Bar**: Features a vertically centered icon and smooth input resizing (from `200px` to `260px` width) with a glowing backdrop shadow on focus.
+  - **Unified Notification System**: Synced global Header and local OrdersView panels that react dynamically to real-time events. Emits notification items on successful ML model predictions (Dashboard) and inventory updates (Orders/Quick Adjust/AI Liquidation). Supports toggling read states, deleting cards, and batch operations.
+  - **Sidebar Brand Polish**: Features a gradient background logo box with border outlines and translation offsets, accompanied by a pulsing active status indicator (`pulse-dot-green`).
+- **Components**: `Dashboard.jsx`, `AnalyticsView.jsx`, `MarketsView.jsx`, `OrdersView.jsx`, `AuthModal.jsx`, `Sidebar.jsx`, `Header.jsx`.
+
+### Detailed Component Implementation & State Flow
+
+#### 1. Unified Real-Time Notifications
+- **Global State (`App.jsx`)**: Declares `notifications` state and handlers (`addNotification`, `markNotificationAsRead`, `clearNotification`, `markAllNotificationsAsRead`, `clearAllNotifications`).
+- **Header Alert Dropdown (`Header.jsx`)**: Displays the unread badge and counts, lists active logs with check (read) and close (dismiss) buttons, and links to bulk action handles.
+- **Local Control Panel (`OrdersView.jsx`)**: Subscribed to the same parent state so notifications are fully synchronized in real-time. Actions inside the stock view (buying, quick adding/selling, and AI liquidating) dynamically dispatch new event notifications.
+
+#### 2. Expanding Search Interface
+- **State Handling (`App.jsx` & `Header.jsx`)**: Binds input `searchQuery` to filter crop options dynamically.
+- **Layout Transitions (`index.css`)**: Implements standard CSS hardware-accelerated transitions that expand the input width from `200px` to `260px` when active, adding a soft outer glow.
+
+#### 3. Brand Block & Sidebar Telemetry
+- **Active State pulsing dot (`Sidebar.jsx` & `index.css`)**: Integrates `@keyframes pulse-glowing-green` and `@keyframes pulse-glowing-red` to power status indicator dots dynamically.
+- **Logo Gradient Overlay (`index.css`)**: Styles the logo box container with `linear-gradient(135deg, var(--clr-primary), var(--clr-primary-container))`, custom border radius, border-outline rules, and soft drop shadow.
 
 ---
 
