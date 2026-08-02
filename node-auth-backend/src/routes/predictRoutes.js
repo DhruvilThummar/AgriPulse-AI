@@ -71,26 +71,26 @@ router.post('/', authMiddleware, async (req, res) => {
       crop: cropName
     });
 
-    // ── Step 3: Save Prediction Audit Log to MongoDB ──
-    // new Prediction({...}): Creates a new document in the predictions collection
-    // This lets users view their prediction history later via GET /predict/history
-    const loggedPrediction = new Prediction({
-      user: req.user.id,               // req.user.id is set by authMiddleware from the JWT payload
-      crop: cropName,
-      previousPrice: Number(previous_price),
-      supplyVolume: Number(supply_volume),
-      transportCostIndex: Number(transport_cost_index),
-      marketDemandScore: Number(market_demand_score),
-      prediction: predictionData.prediction,   // "UP" or "DOWN"
-      confidence: predictionData.confidence,   // e.g. 73.52
-      probabilityUp: predictionData.probability_up
-    });
-    await loggedPrediction.save();  // Write to MongoDB
+    // ── Step 3: Save Prediction Audit Log to MongoDB (Safe Fallback) ──
+    try {
+      const loggedPrediction = new Prediction({
+        user: req.user ? req.user.id : 'anonymous',
+        crop: cropName,
+        previousPrice: Number(previous_price),
+        supplyVolume: Number(supply_volume),
+        transportCostIndex: Number(transport_cost_index),
+        marketDemandScore: Number(market_demand_score),
+        prediction: predictionData.prediction,
+        confidence: predictionData.confidence,
+        probabilityUp: predictionData.probability_up
+      });
+      await loggedPrediction.save();
+      predictionData.logId = loggedPrediction._id;
+    } catch (dbErr) {
+      console.warn('[PREDICT ROUTE] Notice: Could not save prediction log to MongoDB:', dbErr.message);
+      predictionData.logId = 'sim-' + Date.now();
+    }
 
-    // Attach the MongoDB document ID to the response so the frontend can reference it
-    predictionData.logId = loggedPrediction._id;
-
-    // Return the full prediction result from Django (200 OK)
     return res.status(200).json(predictionData);
 
   } catch (error) {

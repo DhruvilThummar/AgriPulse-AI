@@ -130,6 +130,64 @@ const styles = {
 
 const fmtINR = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
+// Helper for Crop Icon mapping
+const getCropIcon = (cropName) => {
+  const c = cropName ? cropName.toLowerCase() : '';
+  if (c.includes('cotton')) return 'cloud';
+  if (c.includes('corn')) return 'grain';
+  if (c.includes('rice')) return 'rice_bowl';
+  if (c.includes('wheat')) return 'grass';
+  if (c.includes('chilli')) return 'local_fire_department';
+  if (c.includes('mustard')) return 'spa';
+  if (c.includes('soybean')) return 'eco';
+  if (c.includes('turmeric')) return 'palette';
+  return 'inventory_2';
+};
+
+// Helper for Risk Tier metadata & styling
+const getRiskBadgeConfig = (pct) => {
+  if (pct > 60) {
+    return {
+      tier: 'HIGH',
+      label: 'High Risk',
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.08)',
+      border: 'rgba(239, 68, 68, 0.3)',
+      gradient: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
+      icon: 'warning',
+      glow: '0 0 10px rgba(239, 68, 68, 0.35)',
+      badgeBg: '#fee2e2',
+      badgeColor: '#991b1b'
+    };
+  }
+  if (pct >= 35) {
+    return {
+      tier: 'MEDIUM',
+      label: 'Medium Risk',
+      color: '#f59e0b',
+      bg: 'rgba(245, 158, 11, 0.08)',
+      border: 'rgba(245, 158, 11, 0.3)',
+      gradient: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+      icon: 'equalizer',
+      glow: '0 0 10px rgba(245, 158, 11, 0.25)',
+      badgeBg: '#fef3c7',
+      badgeColor: '#92400e'
+    };
+  }
+  return {
+    tier: 'LOW',
+    label: 'Low Risk',
+    color: '#10b981',
+    bg: 'rgba(16, 185, 129, 0.08)',
+    border: 'rgba(16, 185, 129, 0.3)',
+    gradient: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+    icon: 'verified',
+    glow: '0 0 10px rgba(16, 185, 129, 0.25)',
+    badgeBg: '#d1fae5',
+    badgeColor: '#065f46'
+  };
+};
+
 // Risk details for each crop
 const CROP_RISK_FACTORS = {
   wheat: { level: 'Low', pct: 25, reason: 'Highly durable storage conditions & consistent government minimum support price protection.', decayCoeff: 0.02 },
@@ -179,6 +237,7 @@ export default function OrdersView({
   const [submitting, setSubmitting] = useState(false);
   const [expanded, setExpanded] = useState(null);
   const [filter, setFilter] = useState('All');
+  const [riskFilter, setRiskFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [backendPredictions, setBackendPredictions] = useState({});
   const [showLogBot, setShowLogBot] = useState(false);
@@ -423,7 +482,7 @@ export default function OrdersView({
 
       const nextCash = cashReserves - cost;
       setCashReserves(nextCash);
-      saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+      saveInventoryToDb(nextInv, nextCash);
 
       showToast(`Added ${qNum} Tons of ${crop.toUpperCase()} stock successfully`, 'success');
       if (addNotification) {
@@ -476,7 +535,7 @@ export default function OrdersView({
       });
       const nextCash = cashReserves - cost;
       setCashReserves(nextCash);
-      saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+      saveInventoryToDb(nextInv, nextCash);
 
       showToast(`Added ${amount} Tons of ${targetCrop.toUpperCase()} via Quick Adjustment.`, 'success');
       if (addNotification) {
@@ -509,7 +568,7 @@ export default function OrdersView({
 
       const nextCash = cashReserves + credit;
       setCashReserves(nextCash);
-      saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+      saveInventoryToDb(nextInv, nextCash);
 
       showToast(`Removed/Sold ${amount} Tons of ${targetCrop.toUpperCase()}. Received ${fmtINR(credit)}.`, 'success');
       if (addNotification) {
@@ -545,7 +604,7 @@ export default function OrdersView({
 
     const nextCash = cashReserves + recoveryAmt;
     setCashReserves(nextCash);
-    saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
+    saveInventoryToDb(nextInv, nextCash);
 
     showToast(`AI Suggested Liquidation Executed: Sold ${actualLiquidate} Tons of ${targetCrop.toUpperCase()}. Received ${fmtINR(recoveryAmt)}`, 'success');
     if (addNotification) {
@@ -642,6 +701,22 @@ export default function OrdersView({
       return b.totalValue - a.totalValue;
     });
   }, [processedInventory]);
+
+  const riskCounts = useMemo(() => {
+    const high = sortedRiskInventory.filter(i => i.risk.pct > 60).length;
+    const med = sortedRiskInventory.filter(i => i.risk.pct >= 35 && i.risk.pct <= 60).length;
+    const low = sortedRiskInventory.filter(i => i.risk.pct < 35).length;
+    const totalDecay = sortedRiskInventory.reduce((sum, item) => sum + Math.round(item.totalValue * item.risk.decayCoeff), 0);
+    const totalVal = sortedRiskInventory.reduce((sum, item) => sum + item.totalValue, 0);
+    return { high, med, low, totalDecay, totalVal };
+  }, [sortedRiskInventory]);
+
+  const displayRiskInventory = useMemo(() => {
+    if (riskFilter === 'HIGH') return sortedRiskInventory.filter(i => i.risk.pct > 60);
+    if (riskFilter === 'MEDIUM') return sortedRiskInventory.filter(i => i.risk.pct >= 35 && i.risk.pct <= 60);
+    if (riskFilter === 'LOW') return sortedRiskInventory.filter(i => i.risk.pct < 35);
+    return sortedRiskInventory;
+  }, [sortedRiskInventory, riskFilter]);
 
   const filteredInventory = useMemo(() => {
     let list = processedInventory;
@@ -1122,113 +1197,420 @@ export default function OrdersView({
 
         {/* Dynamic Risk Allocation & Live AI Core Terminal Logs */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div className="card" style={{ padding: '18px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span className="material-symbols-outlined" style={{ color: 'var(--clr-primary)', fontSize: '18px' }}>shield</span>
-                <h4 style={{ margin: 0, fontSize: '14px' }}>AI Risk Exposure Mapping</h4>
-              </div>
-              <span className="badge" style={{
-                fontSize: '10px',
-                background: avgRiskPct > 60 ? 'var(--clr-error-container)' : 'var(--clr-secondary-container)',
-                color: avgRiskPct > 60 ? 'var(--clr-error)' : 'var(--clr-secondary)',
-                fontWeight: 700
-              }}>
-                Overall Portfolio Risk: {avgRiskPct}%
-              </span>
-            </div>
-            
-            <p style={{ fontSize: '11px', color: 'var(--clr-on-surface-variant)', margin: '0 0 12px 0' }}>
-              Sorted by highest risk factors &amp; total asset valuation.
-            </p>
-            
-            {/* Scroll Container showing 4 items in frame */}
+          {/* Custom style injection for micro-animations and scrollbar */}
+          <style>{`
+            @keyframes pulseSentinel {
+              0% { transform: scale(0.95); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+              70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+              100% { transform: scale(0.95); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            }
+            @keyframes pulseHedgeBtn {
+              0%, 100% { box-shadow: 0 0 4px rgba(239,68,68,0.3); }
+              50% { box-shadow: 0 0 12px rgba(239,68,68,0.6); }
+            }
+            .risk-card-item {
+              transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .risk-card-item:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+            }
+            .custom-risk-scroll::-webkit-scrollbar {
+              width: 5px;
+            }
+            .custom-risk-scroll::-webkit-scrollbar-track {
+              background: var(--clr-surface-container-low, #f3f4f5);
+              border-radius: 4px;
+            }
+            .custom-risk-scroll::-webkit-scrollbar-thumb {
+              background: var(--clr-outline-variant, #c1c8c2);
+              border-radius: 4px;
+            }
+            .custom-risk-scroll::-webkit-scrollbar-thumb:hover {
+              background: var(--clr-outline, #717973);
+            }
+          `}</style>
+
+          <div className="card" style={{
+            padding: '20px',
+            borderRadius: '16px',
+            background: 'var(--clr-surface-container-lowest, #ffffff)',
+            boxShadow: 'var(--shadow-level-1)',
+            border: '1px solid rgba(0, 0, 0, 0.07)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Background Accent Glow */}
             <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-              maxHeight: '360px',
-              overflowY: 'auto',
-              paddingRight: '4px',
-              cursor: 'pointer'
-            }}>
-              {sortedRiskInventory.map((item) => {
-                const isHighRisk = item.risk.pct > 60;
-                const decayAmount = Math.round(item.totalValue * item.risk.decayCoeff);
-                
-                return (
-                  <div key={item.crop} style={{
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    background: 'var(--clr-surface-container-low)',
-                    border: `1px solid ${isHighRisk ? 'rgba(239, 68, 68, 0.25)' : 'var(--clr-outline-variant)'}`,
-                    transition: 'all 0.2s ease'
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '180px',
+              height: '180px',
+              background: avgRiskPct > 60
+                ? 'radial-gradient(circle at 80% 20%, rgba(239, 68, 68, 0.06) 0%, transparent 70%)'
+                : 'radial-gradient(circle at 80% 20%, rgba(1, 45, 29, 0.06) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              zIndex: 0
+            }} />
+
+            {/* Header Row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: avgRiskPct > 60 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(1, 45, 29, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `1px solid ${avgRiskPct > 60 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(1, 45, 29, 0.15)'}`
+                }}>
+                  <span className="material-symbols-outlined" style={{
+                    color: avgRiskPct > 60 ? 'var(--clr-error)' : 'var(--clr-primary)',
+                    fontSize: '22px'
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '6px', flexWrap: 'wrap', gap: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px', color: isHighRisk ? 'var(--clr-error)' : 'var(--clr-primary)' }}>
-                          {isHighRisk ? 'warning' : 'eco'}
-                        </span>
-                        <span style={{ fontWeight: 700, color: 'var(--clr-on-surface)' }}>{item.crop.toUpperCase()}</span>
-                        <span style={{ fontSize: '10px', color: 'var(--clr-outline)' }}>({item.quantity} Tons)</span>
-                        <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--clr-primary)', marginLeft: '4px' }}>
+                    {avgRiskPct > 60 ? 'shield_with_heart' : 'shield'}
+                  </span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--clr-on-surface)' }}>
+                      AI Risk Exposure Mapping
+                    </h4>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 7px',
+                      borderRadius: '9999px',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      color: '#059669',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em'
+                    }}>
+                      <span style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        background: '#10b981',
+                        animation: 'pulseSentinel 2s infinite ease-in-out',
+                        display: 'inline-block'
+                      }} />
+                      LIVE AI SENTINEL
+                    </span>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      padding: '2px 7px',
+                      borderRadius: '9999px',
+                      background: 'rgba(59, 130, 246, 0.08)',
+                      color: '#2563eb',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>cloud_done</span>
+                      DB LIVE SYNC
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '11px', color: 'var(--clr-on-surface-variant)', margin: '2px 0 0 0' }}>
+                    Ranked by risk severity coefficient &amp; total valuation
+                  </p>
+                </div>
+              </div>
+
+              {/* Overall Risk Score Badge */}
+              <div style={{
+                padding: '6px 12px',
+                borderRadius: '10px',
+                background: avgRiskPct > 60
+                  ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(220, 38, 38, 0.22) 100%)'
+                  : avgRiskPct >= 35
+                  ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.22) 100%)'
+                  : 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.22) 100%)',
+                border: `1px solid ${avgRiskPct > 60 ? 'rgba(239, 68, 68, 0.3)' : avgRiskPct >= 35 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: avgRiskPct > 60 ? '0 2px 8px rgba(239, 68, 68, 0.15)' : 'none'
+              }}>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--clr-outline)' }}>
+                    Portfolio Risk
+                  </div>
+                  <div style={{
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)',
+                    color: avgRiskPct > 60 ? '#dc2626' : avgRiskPct >= 35 ? '#d97706' : '#059669',
+                    lineHeight: 1
+                  }}>
+                    {avgRiskPct}%
+                  </div>
+                </div>
+                <span className="material-symbols-outlined" style={{
+                  fontSize: '18px',
+                  color: avgRiskPct > 60 ? '#dc2626' : avgRiskPct >= 35 ? '#d97706' : '#059669'
+                }}>
+                  {avgRiskPct > 60 ? 'warning' : avgRiskPct >= 35 ? 'equalizer' : 'verified_user'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '8px',
+              padding: '10px 12px',
+              borderRadius: '10px',
+              background: 'var(--clr-surface-container-low, #f3f4f5)',
+              border: '1px solid var(--clr-outline-variant, #c1c8c2)',
+              marginBottom: '14px',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <div>
+                <div style={{ fontSize: '9px', color: 'var(--clr-outline)', fontWeight: 600, textTransform: 'uppercase' }}>
+                  Total Holdings Value
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--clr-primary)' }}>
+                  {fmtINR(riskCounts.totalVal)}
+                </div>
+              </div>
+              <div style={{ borderLeft: '1px solid var(--clr-outline-variant)', paddingLeft: '8px' }}>
+                <div style={{ fontSize: '9px', color: 'var(--clr-outline)', fontWeight: 600, textTransform: 'uppercase' }}>
+                  Est. Annual Decay Loss
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--clr-error)' }}>
+                  {fmtINR(riskCounts.totalDecay)}/yr
+                </div>
+              </div>
+              <div style={{ borderLeft: '1px solid var(--clr-outline-variant)', paddingLeft: '8px' }}>
+                <div style={{ fontSize: '9px', color: 'var(--clr-outline)', fontWeight: 600, textTransform: 'uppercase' }}>
+                  High Risk Positions
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: riskCounts.high > 0 ? 'var(--clr-error)' : 'var(--clr-secondary)' }}>
+                  {riskCounts.high} Asset{riskCounts.high === 1 ? '' : 's'}
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Risk Tier Filters */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', position: 'relative', zIndex: 1 }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--clr-outline)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '4px' }}>
+                Filter:
+              </span>
+              {[
+                { id: 'ALL', label: `All (${sortedRiskInventory.length})` },
+                { id: 'HIGH', label: `High Risk (${riskCounts.high})`, badge: riskCounts.high > 0 ? '⚡' : null },
+                { id: 'MEDIUM', label: `Medium (${riskCounts.med})` },
+                { id: 'LOW', label: `Low (${riskCounts.low})` }
+              ].map(t => {
+                const isActive = riskFilter === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setRiskFilter(t.id)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      border: isActive ? '1px solid var(--clr-primary)' : '1px solid var(--clr-outline-variant)',
+                      background: isActive ? 'var(--clr-primary)' : 'var(--clr-surface-container-lowest)',
+                      color: isActive ? '#ffffff' : 'var(--clr-on-surface-variant)',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {t.badge && <span>{t.badge}</span>}
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Scrollable Risk Asset Cards List */}
+            <div
+              className="custom-risk-scroll"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                maxHeight: '380px',
+                overflowY: 'auto',
+                paddingRight: '4px',
+                position: 'relative',
+                zIndex: 1
+              }}
+            >
+              {displayRiskInventory.map((item) => {
+                const badgeCfg = getRiskBadgeConfig(item.risk.pct);
+                const decayAmount = Math.round(item.totalValue * item.risk.decayCoeff);
+                const isHighRisk = item.risk.pct > 60;
+                const cropIcon = getCropIcon(item.crop);
+
+                return (
+                  <div
+                    key={item.crop}
+                    className="risk-card-item"
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: 'var(--clr-surface-container-low, #f3f4f5)',
+                      border: `1px solid ${badgeCfg.border}`,
+                      position: 'relative'
+                    }}
+                  >
+                    {/* Item Top Header Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '6px',
+                          background: badgeCfg.bg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: badgeCfg.color
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                            {cropIcon}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 700, fontSize: '12px', color: 'var(--clr-on-surface)', letterSpacing: '0.02em' }}>
+                              {item.crop.toUpperCase()}
+                            </span>
+                            <span style={{ fontSize: '10px', color: 'var(--clr-outline)', fontWeight: 600 }}>
+                              ({item.quantity} Tons)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--clr-primary)' }}>
                           {fmtINR(item.totalValue)}
                         </span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--clr-outline)', fontFamily: 'var(--font-mono)' }}>
-                          Decay Est: {fmtINR(decayAmount)}/yr
-                        </span>
-                        <span style={{ fontWeight: 700, color: isHighRisk ? 'var(--clr-error)' : 'var(--clr-primary)' }}>
+                        
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: badgeCfg.badgeBg,
+                          color: badgeCfg.badgeColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
+                            {badgeCfg.icon}
+                          </span>
                           {item.risk.pct}% Risk ({item.risk.level})
                         </span>
                       </div>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="progress-bar" style={{ height: '5px', marginBottom: '6px' }}>
-                      <div className="progress-fill" style={{
+                    {/* Styled Gradient Progress Bar */}
+                    <div style={{ position: 'relative', height: '6px', borderRadius: '9999px', background: 'var(--clr-surface-container-high, #e5e7eb)', overflow: 'hidden', marginBottom: '8px' }}>
+                      <div style={{
+                        height: '100%',
                         width: `${item.risk.pct}%`,
-                        background: isHighRisk ? 'var(--clr-error)' : 'var(--clr-primary)'
+                        background: badgeCfg.gradient,
+                        borderRadius: '9999px',
+                        boxShadow: badgeCfg.glow,
+                        transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
                       }} />
                     </div>
 
-                    {/* Risk Rationale & Action Trigger */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: 'var(--clr-on-surface-variant)', marginTop: '4px' }}>
-                      <span style={{ flex: 1, paddingRight: '8px', fontStyle: 'italic' }}>
-                        💡 {item.risk.reason}
-                      </span>
-                      
+                    {/* Details & Rationale Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: 'var(--clr-outline)', fontFamily: 'var(--font-mono)' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '12px', color: 'var(--clr-outline)' }}>
+                          trending_down
+                        </span>
+                        <span>Est. Decay: <strong style={{ color: 'var(--clr-on-surface)' }}>{fmtINR(decayAmount)}/yr</strong></span>
+                      </div>
+
                       {isHighRisk && (
                         <button
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '9px', padding: '2px 6px', color: 'var(--clr-error)', borderColor: 'var(--clr-error)' }}
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            color: '#ffffff',
+                            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 6px rgba(239, 68, 68, 0.3)',
+                            animation: 'pulseHedgeBtn 2.5s infinite ease-in-out'
+                          }}
                           onClick={(e) => { e.stopPropagation(); handleLiquidate(item.crop, Math.round(item.quantity * 0.5)); }}
-                          title="Liquidate 50% high risk inventory position"
+                          title="Liquidate 50% high risk inventory position to mitigate loss exposure"
                         >
-                          ⚡ Risk Hedge 50%
+                          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>bolt</span>
+                          Risk Hedge 50%
                         </button>
                       )}
+                    </div>
+
+                    {/* AI Insight Box */}
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      background: badgeCfg.bg,
+                      borderLeft: `3px solid ${badgeCfg.color}`,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '6px'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px', color: badgeCfg.color, marginTop: '1px', flexShrink: 0 }}>
+                        auto_awesome
+                      </span>
+                      <span style={{ fontSize: '10px', color: 'var(--clr-on-surface-variant)', fontStyle: 'italic', lineHeight: 1.35 }}>
+                        {item.risk.reason}
+                      </span>
                     </div>
                   </div>
                 );
               })}
 
-              {sortedRiskInventory.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '16px', color: 'var(--clr-outline)', fontSize: '11px' }}>
-                  No active stock holding to map risk.
+              {displayRiskInventory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--clr-outline)', fontSize: '11px', background: 'var(--clr-surface-container-low)', borderRadius: '12px', border: '1px stroke var(--clr-outline-variant)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--clr-outline)', marginBottom: '4px', display: 'block' }}>
+                    search_off
+                  </span>
+                  No stock holdings found matching the selected risk level ({riskFilter}).
                 </div>
               )}
             </div>
 
-            {/* View More Frame Bar */}
-            {sortedRiskInventory.length > 4 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--clr-outline-variant)', paddingTop: '10px', marginTop: '10px', fontSize: '10px', color: 'var(--clr-outline)' }}>
-                <span>Showing top 4 high-risk assets in frame</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--clr-primary)', fontWeight: 600, cursor: 'pointer' }}>
+            {/* Frame Footer */}
+            {displayRiskInventory.length > 3 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--clr-outline-variant)', paddingTop: '10px', marginTop: '12px', fontSize: '10px', color: 'var(--clr-outline)', position: 'relative', zIndex: 1 }}>
+                <span>Showing {displayRiskInventory.length} risk-mapped asset positions</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--clr-primary)', fontWeight: 600 }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>unfold_more</span>
-                  Scroll to view {sortedRiskInventory.length - 4} more
+                  Scroll to inspect all positions
                 </span>
               </div>
             )}

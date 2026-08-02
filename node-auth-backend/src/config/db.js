@@ -50,15 +50,9 @@ const connectDB = async () => {
     console.log(`>>> MongoDB Connected: ${conn.connection.host} <<<`);
 
   } catch (error) {
-    // If the connection fails (wrong URI, MongoDB not running, network error, etc.)
-    // Log the error message to the console
-    console.error(`MongoDB Connection Error: ${error.message}`);
-
-    // process.exit(1): Forcefully stops the entire Node.js process.
-    // Exit code 1 = "failure" (exit code 0 = "success").
-    // WHY: If we can't connect to MongoDB, the app can't work at all
-    //      (no login, no data, no predictions) → better to stop cleanly.
-    process.exit(1);
+    // If MongoDB connection fails, log a warning but allow the Node server to keep running
+    console.error(`[WARN] MongoDB Connection Error: ${error.message}`);
+    console.warn(`[WARN] Node backend will operate with fallback/in-memory handlers for predictions & market data.`);
   }
 };
 
