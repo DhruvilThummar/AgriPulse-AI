@@ -14,7 +14,7 @@ const CROP_OPTIONS = [
   { value: 'chilli', label: 'Guntur Chilli Red' }
 ];
 
-export default function Dashboard({ token, showToast }) {
+export default function Dashboard({ token, showToast, addNotification }) {
   // Form Inputs State
   const [crop, setCrop] = useState('wheat');
   const [previousPrice, setPreviousPrice] = useState('1850');
@@ -202,6 +202,13 @@ export default function Dashboard({ token, showToast }) {
       setResult(response.data);
       showToast('Market trend calculated successfully!', 'success');
       
+      if (addNotification) {
+        const cropLabel = getCropLabel(crop);
+        const prediction = response.data.ensemble_prediction;
+        const confidence = response.data.confidence_score;
+        addNotification(`ML Engine: Calculated tomorrow's ${cropLabel} trend as ${prediction.toUpperCase()} (${(confidence * 100).toFixed(0)}% confidence).`);
+      }
+
       // Refresh the prediction log history
       fetchHistory();
     } catch (error) {

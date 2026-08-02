@@ -144,7 +144,16 @@ const CROP_RISK_FACTORS = {
   chilli: { level: 'High', pct: 80, reason: 'Extremely high volatility due to export quality standards and seasonal weather disruptions in cultivation.', decayCoeff: 0.14 }
 };
 
-export default function OrdersView({ showToast, autoSync }) {
+export default function OrdersView({
+  showToast,
+  autoSync,
+  notifications,
+  addNotification,
+  markNotificationAsRead,
+  clearNotification,
+  markAllNotificationsAsRead,
+  clearAllNotifications
+}) {
   const [crop, setCrop] = useState('wheat');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -174,24 +183,7 @@ export default function OrdersView({ showToast, autoSync }) {
   const [backendPredictions, setBackendPredictions] = useState({});
   const [showLogBot, setShowLogBot] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "AI Alert: Cotton tomorrow forecast has high volatility risk (89%).", time: "2m ago", unread: true },
-    { id: 2, text: "Satellite Re-sync: Sentinel-2 telemetry updated successfully.", time: "10m ago", unread: false },
-    { id: 3, text: "System Audit: Model log core is online.", time: "1h ago", unread: false }
-  ]);
-
-  const markNotificationAsRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
-  };
-  const clearNotification = (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-  const markAllNotificationsAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
-  const clearAllNotifications = () => {
-    setNotifications([]);
-  };
+  // Notifications state and handlers received via props
 
   // Local simulated predictions & logs
   const [predictionsLog, setPredictionsLog] = useState([
@@ -426,6 +418,9 @@ export default function OrdersView({ showToast, autoSync }) {
       saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
 
       showToast(`Added ${qNum} Tons of ${crop.toUpperCase()} stock successfully`, 'success');
+      if (addNotification) {
+        addNotification(`Inventory: Purchased ${qNum} Tons of ${crop.toUpperCase()} @ ₹${pNum}/Qtl.`);
+      }
       setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] USER ACTION: Added ${qNum} Tons of ${crop.toUpperCase()} @ ₹${pNum}/Qtl. Portfolio exposure re-weighted.`, ...prev]);
       setQuantity('');
       setSubmitting(false);
@@ -476,6 +471,9 @@ export default function OrdersView({ showToast, autoSync }) {
       saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
 
       showToast(`Added ${amount} Tons of ${targetCrop.toUpperCase()} via Quick Adjustment.`, 'success');
+      if (addNotification) {
+        addNotification(`Quick Action: Added ${amount} Tons of ${targetCrop.toUpperCase()} stock.`);
+      }
       setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] Quick Adjust: Added ${amount} Tons of ${targetCrop.toUpperCase()}.`, ...prev]);
     } else {
       // SELL / LIQUIDATE
@@ -506,6 +504,9 @@ export default function OrdersView({ showToast, autoSync }) {
       saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
 
       showToast(`Removed/Sold ${amount} Tons of ${targetCrop.toUpperCase()}. Received ${fmtINR(credit)}.`, 'success');
+      if (addNotification) {
+        addNotification(`Quick Action: Sold ${amount} Tons of ${targetCrop.toUpperCase()} (Received ${fmtINR(credit)}).`);
+      }
       setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] Quick Adjust: Sold ${amount} Tons of ${targetCrop.toUpperCase()} at market rate.`, ...prev]);
     }
 
@@ -539,6 +540,9 @@ export default function OrdersView({ showToast, autoSync }) {
     saveInventoryToDb(nextInv.length > 0 ? nextInv : inventory, nextCash);
 
     showToast(`AI Suggested Liquidation Executed: Sold ${actualLiquidate} Tons of ${targetCrop.toUpperCase()}. Received ${fmtINR(recoveryAmt)}`, 'success');
+    if (addNotification) {
+      addNotification(`AI Liquidation: Sold ${actualLiquidate} Tons of ${targetCrop.toUpperCase()} (Recovered ${fmtINR(recoveryAmt)}).`);
+    }
     setPredictionsLog(prev => [`[${new Date().toLocaleTimeString()}] AI EXECUTE: Liquidated ${actualLiquidate} Tons of ${targetCrop.toUpperCase()} based on risk decay parameters.`, ...prev]);
   };
 

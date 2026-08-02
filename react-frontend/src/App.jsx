@@ -96,9 +96,7 @@ export default function App() {
 
   // Live Notification System State
   const [notifications, setNotifications] = useState([
-    { id: 1, text: "AI Alert: Cotton tomorrow forecast has high volatility risk (89%).", time: "2m ago", unread: true },
-    { id: 2, text: "Satellite Re-sync: Sentinel-2 telemetry updated successfully.", time: "10m ago", unread: false },
-    { id: 3, text: "System Audit: Model log core is online.", time: "1h ago", unread: false }
+    { id: 1, text: "System: Connected to BFF gateway balancer at localhost:5000.", time: "Just now", unread: false }
   ]);
 
   // Push new live notification simulation periodically
@@ -116,25 +114,7 @@ export default function App() {
     localStorage.setItem('agripulse_autosync', autoSync);
   }, [autoSync]);
 
-  // Push new live notification simulation periodically
-  useEffect(() => {
-    if (!autoSync) return;
-    const crops = ['Wheat', 'Rice', 'Cotton', 'Corn', 'Soybean', 'Mustard', 'Sugarcane'];
-    const interval = setInterval(() => {
-      const crop = crops[Math.floor(Math.random() * crops.length)];
-      const confidence = Math.round(70 + Math.random() * 25);
-      const isUp = Math.random() > 0.5;
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const newAlert = {
-        id: Date.now(),
-        text: `AI Alert: ${crop} forecast trend shifted to ${isUp ? 'UP' : 'DOWN'} (${confidence}% confidence).`,
-        time: `Just now (${time})`,
-        unread: true
-      };
-      setNotifications(prev => [newAlert, ...prev.slice(0, 4)]);
-    }, 20000);
-    return () => clearInterval(interval);
-  }, [autoSync]);
+  // Simulation useEffect removed to show only real event-driven notifications
 
   // Helper to read cookie values
   const getCookie = (name) => {
@@ -238,6 +218,16 @@ export default function App() {
   const showSidebar = user && !['/', '/how-it-works', '/privacy-policy', '/contact'].includes(location.pathname);
 
   // Notification action handlers
+  const addNotification = (text) => {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newAlert = {
+      id: Date.now(),
+      text,
+      time: `Just now (${time})`,
+      unread: true
+    };
+    setNotifications(prev => [newAlert, ...prev].slice(0, 15));
+  };
   const markNotificationAsRead = (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
   };
@@ -441,7 +431,7 @@ export default function App() {
                 {/* Protected Routes */}
                 <Route path="/predictions" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <Dashboard token={token} showToast={showToast} autoSync={autoSync} />
+                    <Dashboard token={token} showToast={showToast} autoSync={autoSync} addNotification={addNotification} />
                   </ProtectedRoute>
                 } />
                 <Route path="/markets" element={
@@ -456,7 +446,16 @@ export default function App() {
                 } />
                 <Route path="/orders" element={
                   <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal} showToast={showToast}>
-                    <OrdersView showToast={showToast} autoSync={autoSync} />
+                    <OrdersView
+                      showToast={showToast}
+                      autoSync={autoSync}
+                      notifications={notifications}
+                      addNotification={addNotification}
+                      markNotificationAsRead={markNotificationAsRead}
+                      clearNotification={clearNotification}
+                      markAllNotificationsAsRead={markAllNotificationsAsRead}
+                      clearAllNotifications={clearAllNotifications}
+                    />
                   </ProtectedRoute>
                 } />
                 <Route path="/help" element={
