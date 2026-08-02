@@ -32,6 +32,7 @@
    - [System Health Check Endpoints](#system-health-check-endpoints)
 9. [Database Schema & Models](#9-database-schema--models)
 10. [Setup & Local Execution Guide](#10-setup--local-execution-guide)
+11. [Vercel Cloud Deployment Guide](#11-vercel-cloud-deployment-guide)
 
 ---
 
@@ -268,3 +269,28 @@ npm run dev
 ```
 
 Application URL: **`http://localhost:5173`**
+
+---
+
+## 11. Vercel Cloud Deployment Guide
+
+AgriCast AI supports serverless cloud deployment on Vercel:
+
+### 1. Project Configuration Files
+- **Django API (`django-predict-service/vercel.json`)**: Configured to run the Django WSGI application (`predict_service/wsgi.py`) using the `@vercel/python` builder.
+- **Node BFF Gateway (`node-auth-backend/vercel.json`)**: Routes all incoming HTTP requests to `server.js` using `@vercel/node`.
+- **React Frontend (`react-frontend/vercel.json`)**: Implements client-side SPA routing rewrites returning `index.html` to prevent 404 page reload errors.
+
+### 2. Environment Setup (Vercel Console)
+- **Frontend Project Variables**:
+  - `VITE_API_URL`: Your deployed Node BFF Vercel domain URL.
+  - `VITE_DJANGO_API_URL`: Your deployed Django API Vercel domain URL.
+- **Node Backend Project Variables**:
+  - `MONGO_URI`: Remote MongoDB Atlas cluster connection string.
+  - `JWT_SECRET`: Secure authentication signing secret string.
+  - `DJANGO_SERVICE_URL`: Deployed Django API Vercel domain.
+  - `SMTP_USER` / `SMTP_PASS` / `SMTP_HOST`: Gmail App SMTP credentials for OTP mail transmissions.
+- **Django ML API Project Variables**:
+  - `API_V1_PREDICT_ROUTE`: `/api/v1/predict`
+  - `API_V1_HEALTH_ROUTE`: `/api/v1/health`
+  - `API_V1_COMMODITIES_ROUTE`: `/api/v1/commodities`
