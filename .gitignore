@@ -67,7 +67,9 @@ staticfiles/
 
 # Database exports & dumps
 *.users.json
+*.user.json
 agripulse.users.json
+agripulse.user.json
 
 # OS metadata
 .DS_Store
