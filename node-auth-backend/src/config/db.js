@@ -14,8 +14,10 @@
  * ════════════════════════════════════════════════════════════
  */
 
-// mongoose: The main library for connecting to MongoDB from Node.js.
 const mongoose = require('mongoose');
+
+// Disable Mongoose buffering so operations fail immediately if DB is offline instead of hanging 10s
+mongoose.set('bufferCommands', false);
 
 // Cache the connection promise across serverless function invocations
 let cachedPromise = null;
@@ -26,29 +28,34 @@ let cachedPromise = null;
  * WHAT IT DOES: Connects to MongoDB with connection reuse for serverless.
  */
 const connectDB = async () => {
-  // If already connected (readyState 1 = connected), return existing connection immediately
+  // If already connected (readyState 1 = connected), return existing connection
   if (mongoose.connection.readyState >= 1) {
     return mongoose.connection;
   }
 
-  // If connection is already in progress, await the pending promise
+  // If connection is in progress, return the cached promise
   if (cachedPromise) {
     return cachedPromise;
   }
 
-  const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/agripulse';
+  const mongoUri = process.env.MONGODB_URI;
+
+  if (!mongoUri) {
+    console.warn('[WARN] MONGO_URI environment variable is not defined. Database features require MONGO_URI.');
+    return null;
+  }
 
   cachedPromise = mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of buffering indefinitely
+    serverSelectionTimeoutMS: 5000, // Fast timeout after 5s
   }).then((conn) => {
     console.log(`>>> MongoDB Connected: ${conn.connection.host} <<<`);
     return conn;
   }).catch((error) => {
-    cachedPromise = null; // Reset cache on failure so future requests can retry
+    cachedPromise = null; // Reset cache on failure
     console.error(`[WARN] MongoDB Connection Error: ${error.message}`);
-    throw error;
+    return null;
   });
 
   return cachedPromise;

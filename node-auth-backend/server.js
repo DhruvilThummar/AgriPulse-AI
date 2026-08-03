@@ -70,22 +70,15 @@ app.use(cors({
 app.use(express.json());
 
 // ── DATABASE CONNECTION MIDDLEWARE ──
-// Ensures MongoDB connection is established on serverless invocation before routes run
+// Trigger connectDB asynchronously on serverless requests without blocking non-database endpoints
 app.use(async (req, res, next) => {
-  if (req.path === '/health' || req.path === '/api/v1/health') {
-    return next();
-  }
   try {
     await connectDB();
-    next();
-  } catch (error) {
-    console.error('[DB Middleware Error]:', error.message);
-    return res.status(503).json({
-      error: 'Database Connection Error',
-      message: 'Failed to connect to MongoDB. Please check MONGO_URI in environment variables and MongoDB Atlas IP Whitelist (allow 0.0.0.0/0).',
-      details: error.message
-    });
+  } catch (err) {
+    // Non-blocking: log warning, allow request to proceed so mock/fallback endpoints function
+    console.warn('[DB Middleware Warning]: MongoDB unavailable, proceeding with request:', err.message);
   }
+  next();
 });
 
 // ── ROUTE MOUNTING ──
