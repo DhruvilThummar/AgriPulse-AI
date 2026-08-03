@@ -69,6 +69,25 @@ app.use(cors({
 // Without this, req.body would be undefined for POST/PUT requests.
 app.use(express.json());
 
+// ── DATABASE CONNECTION MIDDLEWARE ──
+// Ensures MongoDB connection is established on serverless invocation before routes run
+app.use(async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/api/v1/health') {
+    return next();
+  }
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('[DB Middleware Error]:', error.message);
+    return res.status(503).json({
+      error: 'Database Connection Error',
+      message: 'Failed to connect to MongoDB. Please check MONGO_URI in environment variables and MongoDB Atlas IP Whitelist (allow 0.0.0.0/0).',
+      details: error.message
+    });
+  }
+});
+
 // ── ROUTE MOUNTING ──
 // app.use([paths], router): Attaches the router to one or more URL prefixes.
 // When a request comes in, Express checks the URL prefix and forwards it to the right router.
@@ -161,21 +180,24 @@ const PORT = process.env.PORT || 5000;
 //   2. Seed the default user
 //   3. Start listening for HTTP requests
 const startServer = async () => {
-  // Step 1: Connect to MongoDB (defined in src/config/db.js)
-  await connectDB();
+  try {
+    // Step 1: Connect to MongoDB (defined in src/config/db.js)
+    await connectDB();
+    // Step 2: Create the default seed user if needed
+    await seedDefaultUser();
+  } catch (error) {
+    console.error('[STARTUP] MongoDB connection deferred or failed at startup:', error.message);
+  }
 
-  // Step 2: Create the default seed user if needed
-  await seedDefaultUser();
-
-  // Step 3: Start the Express HTTP server
-  // app.listen(PORT, callback): Opens a TCP socket on the specified PORT.
-  // The callback runs once the server is ready to accept requests.
-  app.listen(PORT, () => {
-    console.log(`=================================================`);
-    console.log(`  BFF Node.js server running on port ${PORT}      `);
-    console.log(`  Target Django Predict service: ${process.env.DJANGO_SERVICE_URL || 'http://127.0.0.1:8000'}`);
-    console.log(`=================================================`);
-  });
+  // Step 3: Start local Express HTTP server (in non-serverless mode)
+  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`=================================================`);
+      console.log(`  BFF Node.js server running on port ${PORT}      `);
+      console.log(`  Target Django Predict service: ${process.env.DJANGO_SERVICE_URL || 'http://127.0.0.1:8000'}`);
+      console.log(`=================================================`);
+    });
+  }
 };
 
 // Call the startup function — this kicks everything off
