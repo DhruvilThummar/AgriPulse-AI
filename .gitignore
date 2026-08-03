@@ -65,6 +65,10 @@ staticfiles/
 *.sln
 *.sw?
 
+# Database exports & dumps
+*.users.json
+agripulse.users.json
+
 # OS metadata
 .DS_Store
 Thumbs.db
