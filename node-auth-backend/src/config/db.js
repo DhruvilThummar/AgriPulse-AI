@@ -38,12 +38,7 @@ const connectDB = async () => {
     return cachedPromise;
   }
 
-  const mongoUri = process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    console.warn('[WARN] MONGO_URI environment variable is not defined. Database features require MONGO_URI.');
-    return null;
-  }
+  const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/agripulse';
 
   cachedPromise = mongoose.connect(mongoUri, {
     useNewUrlParser: true,

@@ -1,8 +1,8 @@
 /**
  * Module Name: AuthModal
- * Purpose: Authentication dialog — Login, Sign Up, and OTP verification screens.
+ * Purpose: Authentication dialog — Login, Sign Up, OTP verification, and Forgot Password screens.
  * Redesigned to match Stitch light-mode design: white card, green focus ring, clean typography.
- * Now includes real-time password strength validation on Sign Up.
+ * Now includes Forgot Password flow via Email OTP.
  */
 
 import React, { useState, useMemo } from 'react';
@@ -18,7 +18,7 @@ const PASSWORD_RULES = [
 ];
 
 export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
-  const [view,     setView]     = useState('login'); // 'login' | 'signup' | 'otp'
+  const [view,     setView]     = useState('login'); // 'login' | 'signup' | 'otp' | 'forgot' | 'reset'
   const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +53,7 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
         showToast('Account unverified — OTP sent to your email', 'error');
         setView('otp');
       } else {
-        setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+        setError(err.response?.data?.error || err.response?.data?.message || 'Login failed. Please check your credentials.');
       }
     } finally { setLoading(false); }
   };
@@ -75,11 +75,11 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
       showToast('OTP sent to your email', 'success');
       setView('otp');
     } catch (err) {
-      setError(err.response?.data?.error || 'Sign-up failed. Please try again.');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Sign-up failed. Please try again.');
     } finally { setLoading(false); }
   };
 
-  // ── OTP ──
+  // ── OTP Verification ──
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     if (!otpCode || otpCode.length !== 6) { setError('Please enter the 6-digit code'); return; }
@@ -89,7 +89,46 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
       showToast('Account verified! You can now sign in.', 'success');
       setView('login'); setPassword(''); setOtpCode('');
     } catch (err) {
-      setError(err.response?.data?.error || 'OTP verification failed.');
+      setError(err.response?.data?.error || err.response?.data?.message || 'OTP verification failed.');
+    } finally { setLoading(false); }
+  };
+
+  // ── Forgot Password Request ──
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) { setError('Please enter your email address'); return; }
+    setError(''); setLoading(true);
+    try {
+      await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
+      showToast('Password reset OTP sent to your email', 'success');
+      setView('reset');
+      setPassword('');
+      setOtpCode('');
+    } catch (err) {
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to send reset code. Please try again.');
+    } finally { setLoading(false); }
+  };
+
+  // ── Reset Password Submit ──
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!otpCode || otpCode.length !== 6) { setError('Please enter the 6-digit code'); return; }
+    if (!password) { setError('Please enter a new password'); return; }
+
+    if (!allPasswordRulesPassed) {
+      setError('Password does not meet all requirements');
+      return;
+    }
+
+    setError(''); setLoading(true);
+    try {
+      await axios.post(`${BASE_URL}/auth/reset-password`, { email, otp: otpCode, newPassword: password });
+      showToast('Password reset successfully! Please sign in.', 'success');
+      setView('login');
+      setPassword('');
+      setOtpCode('');
+    } catch (err) {
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to reset password.');
     } finally { setLoading(false); }
   };
 
@@ -134,9 +173,8 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
         }}
       >
 
-        {/* OTP view has back button; others show tabs */}
-        {view === 'otp' ? (
-          /* OTP Card */
+        {/* ── OTP View ── */}
+        {view === 'otp' && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
               <button
@@ -184,8 +222,201 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
               </button>
             </form>
           </>
-        ) : (
-          /* Login / Sign Up with tab switcher */
+        )}
+
+        {/* ── Forgot Password Request View ── */}
+        {view === 'forgot' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <button
+                onClick={() => switchView('login')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', color: 'var(--clr-on-surface-variant)', marginLeft: '-8px', display: 'flex' }}
+                aria-label="Back to Login"
+              >
+                <span className="material-symbols-outlined">arrow_back</span>
+              </button>
+              <h2 style={{ marginLeft: '8px', fontSize: '24px', fontWeight: 600 }}>Reset Password</h2>
+            </div>
+            <p style={{ fontSize: '14px', marginBottom: '24px', color: 'var(--clr-on-surface-variant)' }}>
+              Enter your account email address below to receive a 6-digit password reset code.
+            </p>
+
+            {error && (
+              <div style={{ padding: '10px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label htmlFor="forgot-email" style={labelStyle}>Email Address</label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="analyst@tradingco.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  style={inputStyle}
+                  onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
+                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ width: '100%', height: '40px', justifyContent: 'center' }}
+                disabled={loading}
+              >
+                {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : 'Send Reset Code'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* ── Reset Password View (OTP + New Password) ── */}
+        {view === 'reset' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <button
+                onClick={() => switchView('forgot')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', color: 'var(--clr-on-surface-variant)', marginLeft: '-8px', display: 'flex' }}
+                aria-label="Back"
+              >
+                <span className="material-symbols-outlined">arrow_back</span>
+              </button>
+              <h2 style={{ marginLeft: '8px', fontSize: '24px', fontWeight: 600 }}>Set New Password</h2>
+            </div>
+            <p style={{ fontSize: '14px', marginBottom: '20px', color: 'var(--clr-on-surface-variant)' }}>
+              Enter the 6-digit code sent to <strong>{email}</strong> and your new password.
+            </p>
+
+            {error && (
+              <div style={{ padding: '10px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label htmlFor="reset-otp-input" style={labelStyle}>6-Digit OTP Code</label>
+                <input
+                  id="reset-otp-input"
+                  type="text"
+                  maxLength="6"
+                  placeholder="––––––"
+                  value={otpCode}
+                  onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  style={{
+                    ...inputStyle,
+                    textAlign: 'center',
+                    fontSize: '20px',
+                    letterSpacing: '8px',
+                    fontFamily: 'var(--font-mono)',
+                    padding: '8px',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
+                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="reset-password-input" style={labelStyle}>New Password</label>
+                <input
+                  id="reset-password-input"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={inputStyle}
+                  onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
+                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  required
+                />
+              </div>
+
+              {/* Password Strength Indicators */}
+              {password.length > 0 && (
+                <div style={{
+                  background: 'var(--clr-surface-container)',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
+                    Password Requirements
+                  </span>
+                  {passwordChecks.map(check => (
+                    <div
+                      key={check.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        fontSize: '13px',
+                        color: check.passed ? 'var(--clr-primary)' : 'var(--clr-on-surface-variant)',
+                        fontWeight: check.passed ? 500 : 400,
+                        transition: 'color 0.2s',
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{
+                        fontSize: '16px',
+                        color: check.passed ? '#4caf50' : 'var(--clr-outline)',
+                        transition: 'color 0.2s, transform 0.2s',
+                        transform: check.passed ? 'scale(1.1)' : 'scale(1)',
+                      }}>
+                        {check.passed ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
+                      {check.label}
+                    </div>
+                  ))}
+
+                  {/* Password Strength Bar */}
+                  <div style={{ marginTop: '4px' }}>
+                    <div style={{
+                      height: '4px',
+                      borderRadius: '2px',
+                      background: 'var(--clr-outline-variant)',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        borderRadius: '2px',
+                        width: `${(passwordChecks.filter(c => c.passed).length / PASSWORD_RULES.length) * 100}%`,
+                        background: allPasswordRulesPassed ? '#4caf50' :
+                                    passwordChecks.filter(c => c.passed).length >= 2 ? '#ff9800' : 'var(--clr-error)',
+                        transition: 'width 0.3s ease, background 0.3s ease',
+                      }} />
+                    </div>
+                    <div style={{
+                      fontSize: '11px', marginTop: '4px', textAlign: 'right',
+                      color: allPasswordRulesPassed ? '#4caf50' :
+                             passwordChecks.filter(c => c.passed).length >= 2 ? '#ff9800' : 'var(--clr-error)',
+                      fontWeight: 600,
+                    }}>
+                      {allPasswordRulesPassed ? 'Strong' :
+                       passwordChecks.filter(c => c.passed).length >= 2 ? 'Medium' : 'Weak'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ width: '100%', height: '40px', marginTop: '4px', justifyContent: 'center' }}
+                disabled={loading || (password.length > 0 && !allPasswordRulesPassed)}
+              >
+                {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : 'Reset Password'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* ── Login / Sign Up Tab Switcher Views ── */}
+        {(view === 'login' || view === 'signup') && (
           <>
             {/* Tab toggle */}
             <div style={{ 
@@ -268,7 +499,27 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                 />
               </div>
               <div>
-                <label htmlFor={`${view}-password`} style={labelStyle}>Password</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label htmlFor={`${view}-password`} style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
+                  {view === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => switchView('forgot')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--clr-primary)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontFamily: 'var(--font-sans)',
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <input
                   id={`${view}-password`}
                   type="password"

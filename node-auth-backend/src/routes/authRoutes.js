@@ -16,11 +16,8 @@
 
 // express: Web framework — Router() creates a mini-app for this group of routes
 const express = require('express');
-
-// router: An Express Router instance.
-// Think of it as a sub-application that handles only /api/auth/* routes.
-// Defined routes on `router` are relative to the mount path.
 const router = express.Router();
+const mongoose = require('mongoose');
 
 // bcryptjs: Library for hashing and comparing passwords securely.
 // Never store plain-text passwords — always hash them first.
@@ -51,6 +48,13 @@ const { sendOtpEmail } = require('../config/nodemailer');
 //   4. Generates a 6-digit OTP and sends it to the user's email.
 // ════════════════════════════════════════════════════════════
 router.post('/signup', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Database Connection Unavailable',
+      message: 'MongoDB Atlas is not connected. Please configure MONGO_URI in Vercel Environment Variables.'
+    });
+  }
+
   // Extract name, email and password from the request body (sent as JSON)
   const { name, email, password } = req.body;
 
@@ -59,50 +63,38 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ error: 'Please provide both email and password' });
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+
   try {
-    // ── Check if user already exists ──
-    // User.findOne({ email }): MongoDB query — searches for a document with this email
-    const existingUser = await User.findOne({ email });
+    // ── Check if user already exists (case-insensitive) ──
+    const existingUser = await User.findOne({ email: new RegExp(`^${cleanEmail}$`, 'i') });
     if (existingUser) {
-      // 400 Bad Request = the user made an invalid request (email already taken)
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
     // ── Hash the password ──
-    // bcrypt.genSalt(10): Creates a random "salt" with 10 work factor rounds.
-    // More rounds = more secure but slower. 10 is the industry standard.
     const salt = await bcrypt.genSalt(10);
-
-    // bcrypt.hash(password, salt): Combines password + salt and runs the bcrypt algorithm.
-    // The result is a long string like "$2a$10$..." — this is what we store in MongoDB.
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // ── Create and save the new User document ──
-    // new User({...}): Creates a new MongoDB document in memory (not saved yet)
     const newUser = new User({
       name: name ? name.trim() : '',
-      email,
-      password: hashedPassword,  // Only the hash is stored — never plain text
-      isVerified: false           // Account starts as unverified until OTP is confirmed
+      email: cleanEmail,
+      password: hashedPassword,
+      isVerified: false
     });
-    await newUser.save();  // .save(): Actually writes the document to MongoDB
+    await newUser.save();
 
     // ── Generate a 6-digit OTP code ──
-    // Math.floor(100000 + Math.random() * 900000): Generates a random integer between 100000 and 999999
     const otpCode  = Math.floor(100000 + Math.random() * 900000).toString();
-    // OTP expires in 5 minutes from now (5 * 60 * 1000 milliseconds)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    // ── Save OTP to MongoDB ──
-    // Stored separately so it can be deleted after verification (clean up)
-    const newOtp = new Otp({ email, otpCode, expiresAt });
+    const newOtp = new Otp({ email: cleanEmail, otpCode, expiresAt });
     await newOtp.save();
 
-    // ── Send OTP via email with user's name ──
-    // sendOtpEmail(): Defined in config/nodemailer.js — uses Nodemailer to send the email
-    await sendOtpEmail(email, otpCode, name || '');
+    // ── Send OTP via email ──
+    await sendOtpEmail(cleanEmail, otpCode, name || '');
 
-    // 201 Created: Standard HTTP status for "resource was created successfully"
     return res.status(201).json({ message: 'User registered. OTP sent to your email.' });
 
   } catch (error) {
@@ -122,6 +114,13 @@ router.post('/signup', async (req, res) => {
 //   3. Deletes the used OTP record (one-time use only).
 // ════════════════════════════════════════════════════════════
 router.post('/verify-otp', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Database Connection Unavailable',
+      message: 'MongoDB Atlas is not connected. Please configure MONGO_URI in Vercel Environment Variables.'
+    });
+  }
+
   const { email, otp } = req.body;
 
   if (!email || !otp) {
@@ -170,18 +169,25 @@ router.post('/verify-otp', async (req, res) => {
 //   4. If credentials are valid → signs and returns a 7-day JWT token.
 // ════════════════════════════════════════════════════════════
 router.post('/login', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Database Connection Unavailable',
+      message: 'MongoDB Atlas is not connected. Please configure MONGO_URI in Vercel Environment Variables.'
+    });
+  }
+
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Please provide both email and password' });
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+
   try {
-    // ── Find user by email ──
-    const user = await User.findOne({ email });
+    // ── Find user by email (case-insensitive) ──
+    const user = await User.findOne({ email: new RegExp(`^${cleanEmail}$`, 'i') });
     if (!user) {
-      // Return same generic error for both "wrong email" and "wrong password"
-      // (avoids telling attackers which part was wrong — security best practice)
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
@@ -243,6 +249,105 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Error during login:', error);
     return res.status(500).json({ error: 'Internal server error during login' });
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// ROUTE: POST /api/auth/forgot-password
+// ACCESS: Public
+// WHAT IT DOES: Sends a 6-digit password reset OTP to the user's email.
+// ════════════════════════════════════════════════════════════
+router.post('/forgot-password', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Database Connection Unavailable',
+      message: 'MongoDB Atlas is not connected. Please configure MONGO_URI in Vercel Environment Variables.'
+    });
+  }
+
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Please provide your email address' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+
+  try {
+    const user = await User.findOne({ email: new RegExp(`^${cleanEmail}$`, 'i') });
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with this email address' });
+    }
+
+    // Delete any previous pending OTPs for this email
+    await Otp.deleteMany({ email: cleanEmail });
+
+    // Generate new 6-digit OTP code (expires in 5 minutes)
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const newOtp = new Otp({ email: cleanEmail, otpCode, expiresAt });
+    await newOtp.save();
+
+    // Send OTP via email
+    await sendOtpEmail(cleanEmail, otpCode, user.name || '');
+
+    return res.status(200).json({ message: 'Password reset OTP code sent to your email.' });
+
+  } catch (error) {
+    console.error('Error requesting password reset:', error);
+    return res.status(500).json({ error: 'Internal server error during password reset request' });
+  }
+});
+
+
+// ════════════════════════════════════════════════════════════
+// ROUTE: POST /api/auth/reset-password
+// ACCESS: Public
+// WHAT IT DOES: Verifies the 6-digit OTP and sets a new password for the user.
+// ════════════════════════════════════════════════════════════
+router.post('/reset-password', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: 'Database Connection Unavailable',
+      message: 'MongoDB Atlas is not connected. Please configure MONGO_URI in Vercel Environment Variables.'
+    });
+  }
+
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ error: 'Please provide email, OTP code, and new password' });
+  }
+
+  try {
+    // Find matching OTP record
+    const otpRecord = await Otp.findOne({ email, otpCode: otp });
+    if (!otpRecord) {
+      return res.status(400).json({ error: 'Invalid or expired OTP code' });
+    }
+
+    // Find target user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User associated with this email not found' });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update user password and ensure account is verified
+    user.password = hashedPassword;
+    user.isVerified = true;
+    await user.save();
+
+    // Delete used OTP
+    await Otp.deleteOne({ _id: otpRecord._id });
+
+    return res.status(200).json({ message: 'Password reset successfully! You can now log in with your new password.' });
+
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    return res.status(500).json({ error: 'Internal server error during password reset' });
   }
 });
 
