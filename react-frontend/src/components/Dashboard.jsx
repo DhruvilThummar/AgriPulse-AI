@@ -959,7 +959,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
             )}
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-responsive-wrapper">
             <table className="data-table" aria-label="Recent agricultural market predictions history">
               <thead>
                 <tr>

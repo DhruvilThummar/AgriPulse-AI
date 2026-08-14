@@ -1378,14 +1378,55 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
   to { transform: translateY(0); }
 }
 
-/* ─── Native App Slide-Up Sheet Modals on Mobile ─── */
+/* ─── Native App Slide-Up Sheet Modals & Responsive Breakpoints ─── */
+@media (max-width: 1200px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 72px;
+  }
+  .sidebar-brand-text,
+  .sidebar-brand-block span:not(.material-symbols-outlined),
+  .nav-link span:not(.material-symbols-outlined),
+  .sidebar-new-trade span:not(.material-symbols-outlined) {
+    display: none;
+  }
+  .sidebar-new-trade {
+    padding: 10px;
+    justify-content: center;
+  }
+  .main-content {
+    padding-left: 72px;
+  }
+  .bento-grid { grid-template-columns: 1fr; }
+  .col-8, .col-4, .col-12 { grid-column: span 1; }
+}
+
+@media (max-width: 768px) {
+  .sidebar { display: none !important; }
+  .main-content {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    padding-top: 68px !important;
+  }
+  .page-container {
+    padding: 0 8px 16px 8px !important;
+  }
+  .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+}
+
 @media (max-width: 640px) {
   .mobile-bottom-bar {
-    display: block;
+    display: block !important;
   }
 
   .main-content {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   /* Transform popups/modals into native bottom sheets */
@@ -1417,32 +1458,63 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
 
   /* Responsive layout adjustments */
   .top-header {
-    left: 8px !important;
-    right: 8px !important;
+    left: 6px !important;
+    right: 6px !important;
     top: 6px !important;
-    padding: 0 12px !important;
+    padding: 0 10px !important;
     height: 52px !important;
   }
 
   .header-brand {
-    font-size: 16px !important;
+    font-size: 15px !important;
   }
 
   .header-search input {
-    width: 130px !important;
+    width: 110px !important;
+    font-size: 11px !important;
+    padding-left: 30px !important;
   }
 
   .header-search input:focus {
-    width: 170px !important;
+    width: 140px !important;
   }
 
   .header-nav {
     display: none !important;
   }
 
-  .grid-3, .grid-2 {
+  .grid-4, .grid-3, .grid-2 {
     grid-template-columns: 1fr !important;
   }
 }
+
+@media (max-width: 480px) {
+  .card, .card-predictor {
+    padding: 16px !important;
+  }
+
+  h1 {
+    font-size: 22px !important;
+    line-height: 1.25 !important;
+  }
+
+  h2 {
+    font-size: 18px !important;
+  }
+
+  h3 {
+    font-size: 16px !important;
+  }
+
+  .header-search {
+    display: none !important;
+  }
+
+  .btn {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+}
+
 
 

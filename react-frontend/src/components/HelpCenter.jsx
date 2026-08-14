@@ -43,7 +43,7 @@ export default function HelpCenter() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginTop: '16px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginTop: '16px', alignItems: 'start' }}>
         
         {/* FAQs */}
         <div className="card" style={{ padding: '24px' }}>

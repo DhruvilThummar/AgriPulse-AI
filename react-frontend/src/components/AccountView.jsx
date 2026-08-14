@@ -77,7 +77,7 @@ export default function AccountView({ user, onLogout, showToast }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '24px', marginTop: '16px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginTop: '16px', alignItems: 'start' }}>
         
         {/* User Card */}
         <div 

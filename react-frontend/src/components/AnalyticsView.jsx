@@ -723,7 +723,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '24px', alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', alignItems: 'center' }}>
             {/* Confusion Matrix Grid */}
             <div style={{ background: 'var(--clr-surface-container-low)', padding: '16px', borderRadius: '8px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px', color: 'var(--clr-outline)' }}>
@@ -758,7 +758,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
             </div>
 
             {/* Derived Performance Formulas Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
               {[
                 { label: 'Sensitivity / Recall', val: `${modelSummary.classification_metrics.derived_formulas?.sensitivity_recall_pct}%` },
                 { label: 'Specificity', val: `${modelSummary.classification_metrics.derived_formulas?.specificity_pct}%` },
@@ -836,7 +836,7 @@ export default function AnalyticsView({ showToast, autoSync }) {
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
+        <div className="table-responsive-wrapper">
           <table className="data-table">
             <thead>
               <tr style={{ cursor: 'pointer' }}>

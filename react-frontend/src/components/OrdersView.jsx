@@ -1365,7 +1365,7 @@ export default function OrdersView({
             {/* Quick Metrics Bar */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
               gap: '8px',
               padding: '10px 12px',
               borderRadius: '10px',
