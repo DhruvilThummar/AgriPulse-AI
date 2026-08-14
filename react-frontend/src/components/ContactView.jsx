@@ -110,10 +110,15 @@ export default function ContactView({ showToast }) {
               </div>
               <div>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--clr-outline)', fontWeight: 600 }}>APMC Telemetry Headquarter</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-on-surface)' }}>Gujarat &amp; New Delhi Exchange Grids</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--clr-on-surface)' }}>Ahmedabad, Gujarat &amp; New Delhi Exchange Grids</div>
               </div>
             </div>
           </div>
+
+          <div style={{ overflow: 'hidden', border: '1px solid var(--clr-outline-variant)', height: '160px', width: '100%' }}>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d235014.29918593855!2d72.41493121847908!3d23.020158085669532!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e848aba5bd449%3A0x4fcedd11614f6516!2sAhmedabad%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1785817002471!5m2!1sen!2sin" width="100%" height="100%" style={{ border: 0 }} allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
+
 
           <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--clr-outline-variant)', fontSize: '11px', color: 'var(--clr-outline)', fontFamily: 'var(--font-mono)' }}>
             Nodemailer Gateway: Active Email Dispatcher
