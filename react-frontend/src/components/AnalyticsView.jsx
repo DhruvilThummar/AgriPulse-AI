@@ -679,19 +679,27 @@ export default function AnalyticsView({ showToast, autoSync }) {
       </div>
 
       {/* Dynamic Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', margin: '24px 0' }}>
+      <div
+        className="analytics-metric-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '16px',
+          margin: '24px 0'
+        }}
+      >
         {[
           { label: 'Supply Forecast', value: metrics.supply, unit: 'Tonnes', trend: `${metrics.supplyTrend} vs last year`, trendUp: !metrics.supplyTrend.includes('-') },
           { label: 'Global Demand Index', value: metrics.demand, unit: '/ 100', trend: `${metrics.demandTrend} from peak`, trendUp: metrics.demandTrend.includes('+') },
           { label: 'Export Volume (Est)', value: metrics.export, unit: 'MT', trend: 'Stable output', trendUp: null }
         ].map((m, i) => (
-          <div key={i} className="card" style={{ padding: '20px', borderLeft: '4px solid var(--clr-secondary)' }}>
+          <div key={i} className="card" style={{ padding: '18px 20px', borderLeft: '4px solid var(--clr-secondary)', borderRadius: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--clr-on-surface-variant)', marginBottom: '8px' }}>
               <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.label}</span>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>analytics</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-              <span style={{ fontSize: '26px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{m.value}</span>
+              <span style={{ fontSize: 'clamp(22px, 3vw, 26px)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{m.value}</span>
               <span style={{ fontSize: '12px', color: 'var(--clr-outline)', fontFamily: 'var(--font-sans)' }}>{m.unit}</span>
             </div>
             <div style={{

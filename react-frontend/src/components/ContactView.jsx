@@ -189,41 +189,63 @@ export default function ContactView({ showToast }) {
         </div>
 
         {/* Contact Form Card */}
-        <div className="card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', borderTop: '4px solid var(--clr-primary)' }}>
+        <div
+          className="card contact-form-card"
+          style={{
+            padding: 'clamp(16px, 4vw, 28px)',
+            display: 'flex',
+            flexDirection: 'column',
+            borderTop: '4px solid var(--clr-primary)',
+            borderRadius: '16px'
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <span className="material-symbols-outlined icon-filled" style={{ color: 'var(--clr-primary)', fontSize: '22px' }}>mark_email_read</span>
             <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Send Us a Message</h3>
           </div>
 
-          {/* Quick Subject Select Pills */}
+          {/* Quick Subject Select Chips */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--clr-primary)' }}>auto_awesome</span>
               Quick Topic Selection:
             </label>
-            <div className="horizontal-scroll-chips">
+            <div
+              className="horizontal-scroll-chips"
+              style={{
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '6px',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
+            >
               {INQUIRY_TOPICS.map((topic, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => setSubject(topic.value)}
                   style={{
-                    padding: '6px 12px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
+                    padding: '8px 14px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     border: subject === topic.value ? '1px solid var(--clr-primary)' : '1px solid var(--clr-outline-variant)',
                     background: subject === topic.value ? 'var(--clr-primary)' : 'var(--clr-surface-container-lowest)',
-                    color: subject === topic.value ? '#fff' : 'var(--clr-on-surface-variant)',
+                    color: subject === topic.value ? '#ffffff' : 'var(--clr-on-surface-variant)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
+                    minHeight: '40px',
+                    flexShrink: 0,
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: subject === topic.value ? '#fff' : 'var(--clr-primary)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px', color: subject === topic.value ? '#ffffff' : 'var(--clr-primary)' }}>
                     {topic.icon}
                   </span>
                   {topic.label}
@@ -255,7 +277,7 @@ export default function ContactView({ showToast }) {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="contact-name">Your Full Name</label>
                 <div style={{ position: 'relative' }}>
@@ -267,6 +289,7 @@ export default function ContactView({ showToast }) {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     disabled={sending}
+                    style={{ minHeight: '48px', fontSize: '16px' }}
                   />
                 </div>
               </div>
@@ -283,6 +306,7 @@ export default function ContactView({ showToast }) {
                     onChange={e => setEmail(e.target.value)}
                     required
                     disabled={sending}
+                    style={{ minHeight: '48px', fontSize: '16px' }}
                   />
                 </div>
               </div>
@@ -298,6 +322,7 @@ export default function ContactView({ showToast }) {
                 value={subject}
                 onChange={e => setSubject(e.target.value)}
                 disabled={sending}
+                style={{ minHeight: '48px', fontSize: '16px' }}
               />
             </div>
 
@@ -307,12 +332,12 @@ export default function ContactView({ showToast }) {
                 id="contact-message"
                 className="form-input"
                 placeholder="Describe your request or technical inquiry..."
-                rows="4"
+                rows={4}
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 required
                 disabled={sending}
-                style={{ resize: 'vertical', flex: 1, minHeight: '100px' }}
+                style={{ resize: 'vertical', flex: 1, minHeight: '110px', fontSize: '16px', padding: '12px 14px' }}
               />
             </div>
 
@@ -320,12 +345,24 @@ export default function ContactView({ showToast }) {
               type="submit"
               className="btn btn-primary btn-lg"
               disabled={sending}
-              style={{ width: '100%', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', borderRadius: '12px' }}
+              style={{
+                width: '100%',
+                marginTop: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '14px 20px',
+                borderRadius: '12px',
+                minHeight: '48px',
+                fontSize: '14px',
+                fontWeight: 700
+              }}
             >
               {sending ? (
                 <>
-                  <div className="spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff' }} />
-                  Sending Message...
+                  <div className="spinner" style={{ width: '16px', height: '16px', borderTopColor: '#ffffff' }} />
+                  <span>Dispatching Inquiry...</span>
                 </>
               ) : (
                 <>
