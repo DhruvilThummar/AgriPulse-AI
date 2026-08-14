@@ -1,6 +1,6 @@
 # 🌾 AgricastAI — Precision Agricultural Intelligence & Mandi Forecast Platform
 
-> **Enterprise-grade agricultural market intelligence platform combining real-time APMC Mandi web scraping, live OpenWeatherMap telemetry, a 10-feature Scikit-Learn GBDT dual-model ensemble machine learning engine, and a native-feeling PWA React frontend.**
+> **Enterprise-grade agricultural market intelligence platform combining real-time APMC Mandi web scraping, live OpenWeatherMap telemetry, Round-Robin load-balanced Django worker nodes, a 10-feature Scikit-Learn GBDT machine learning engine, Skeleton Shimmer UI, and a native-feeling PWA React frontend.**
 
 ![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge&logo=github-actions)
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
@@ -9,6 +9,7 @@
 ![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![PWA Ready](https://img.shields.io/badge/PWA-Workbox%20Offline%20Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
+![Load Balancer](https://img.shields.io/badge/Load%20Balancer-Round%20Robin-FF6F00?style=for-the-badge&logo=nginx&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
 ---
@@ -22,81 +23,86 @@
 - [Local Setup & Installation](#-local-setup--installation)
 - [Environment Variables](#-environment-variables)
 - [API Reference](#-api-reference)
-- [Machine Learning Pipeline](#-machine-learning-pipeline)
+- [Machine Learning & Load Balancer Pipeline](#-machine-learning--load-balancer-pipeline)
 - [License & Authors](#-license--authors)
 
 ---
 
 ## 🌾 Overview
 
-**AgricastAI** ([agricastai.vercel.app](https://agricastai.vercel.app/)) is an end-to-end agritech intelligence platform engineered for Indian farmers, APMC Mandi traders, and agricultural supply chain decision-makers. 
+**AgricastAI** ([agricastai.vercel.app](https://agricastai.vercel.app/)) is an end-to-end agritech intelligence platform engineered for Indian farmers, APMC Mandi traders, and agricultural supply chain decision-makers.
 
 Agricultural markets in India suffer from severe price opacity, localized freight vulnerabilities, and sudden weather-induced supply shocks. AgricastAI solves this by providing:
 1. **Short-Term Mandi Price Forecasting**: Predicts next-day market price direction (**UP** or **DOWN**) with confidence scores (%) and target prices ($\text{₹}/\text{Quintal}$).
 2. **Domain-Specific Agricultural Telemetry**: Incorporates regional monsoon anomaly scoring (`weather_impact_score`), freight transport indices, and Government Minimum Support Price (MSP) variance (`msp_difference_pct`).
-3. **High-Readability Outdoor Mobile UX**: High-contrast theme tokens designed for direct sunlight legibility, $\ge 48\text{px}$ touch targets, native bottom navigation, and full PWA offline operation in low-connectivity rural zones.
+3. **High-Readability Outdoor Mobile UX**: High-contrast theme tokens designed for direct sunlight legibility, $\ge 48\text{px}$ touch targets, native bottom navigation, Skeleton Shimmer loading placeholders, and full PWA offline operation in low-connectivity rural zones.
 
 ---
 
 ## 🏗️ System Architecture
 
-AgricastAI uses a modular, decoupled three-tier microservice architecture:
+AgricastAI uses a modular, decoupled three-tier microservice architecture with **Round-Robin Load Balancing**:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                      React 18 Vite PWA Client                            │
-│                 (High-Contrast Outdoor UX, Port 5173)                   │
+│           (React.lazy Code Splitting + Skeleton Shimmers)               │
 │   Dashboard │ Mandi Feed │ ML Predictor │ Analytics Hub │ AgriChatbot    │
 └────────────────────────────────────┬─────────────────────────────────────┘
                                      │  HTTP REST / Bearer JWT Token
                                      ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                   Node.js BFF Gateway (Express, Port 5000)               │
+│                  Node.js BFF Gateway (Express, Port 5000)                │
 │                                                                          │
 │  /api/auth/*            ➔ Auth Routes (Signup / Login / 6-Digit OTP)    │
-│  /api/predict/*         ➔ Predict & Analytics Proxy                     │
+│  /api/predict/*         ➔ Predict & Analytics → Round-Robin Balancer   │
 │  /api/commodity-prices  ➔ Live APMC Commodity Ticker Feed                │
+│  /api/chat/query        ➔ AgriChatbot Intelligence Endpoint             │
 │  /api/subscribe         ➔ Nodemailer Email Alert Gateway                 │
 │                                                                          │
 │  MongoDB Database 🔒 User Accounts · OTP Tokens · Prediction Logs        │
 └────────────────────────────────────┬─────────────────────────────────────┘
-                                     │  Proxy Request / JSON Body
-                                     ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│                 Django ML Microservice (Python 3.10+, Port 8000)          │
-│                                                                          │
-│  POST /api/v1/predict     ➔ PredictView (10-Feature GBDT Inference)      │
-│  GET  /api/v1/analytics   ➔ Pandas Data Wrangling & Descriptive Metrics  │
-│  GET  /api/v1/model/summary➔ Scikit-Learn Confusion Matrix & Formulas   │
-│                                                                          │
-│  ┌─────────────────────────┐  ┌──────────────────────────────────────┐  │
-│  │ Scikit-Learn Pipeline   │  │ External Data Scrapers & Telemetry    │  │
-│  │  - HistGradientBoosting │  │  - OpenWeatherMap API                │  │
-│  │  - Hot-Reloading (.joblib)│ │  - BeautifulSoup4 APMC Scraper       │  │
-│  │  - Math Heuristic Engine│  │  - Yahoo Finance Spot Feed           │  │
-│  └─────────────────────────┘  └──────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────┘
+                                     │  Round-Robin Dispatch (15s Health Check)
+                         ┌───────────┴───────────┐
+                         ▼                       ▼
+            ┌────────────────────────┐  ┌────────────────────────┐
+            │   Django Worker Node 1 │  │   Django Worker Node 2 │
+            │   Port 8000            │  │   Port 8001            │
+            │                        │  │                        │
+            │  POST /api/v1/predict  │  │  POST /api/v1/predict  │
+            │  GET  /api/v1/analytics│  │  GET  /api/v1/analytics│
+            │  GET  /api/v1/health   │  │  GET  /api/v1/health   │
+            │                        │  │                        │
+            │  ┌──────────────────┐  │  │  ┌──────────────────┐  │
+            │  │ Scikit-Learn ML  │  │  │  │ Scikit-Learn ML  │  │
+            │  │ OpenWeather API  │  │  │  │ OpenWeather API  │  │
+            │  │ Mandi Scraper    │  │  │  │ Mandi Scraper    │  │
+            │  └──────────────────┘  │  │  └──────────────────┘  │
+            └────────────────────────┘  └────────────────────────┘
 ```
 
 ### End-to-End Request Lifecycle
-1. **User Action**: A farmer inputs market parameters (crop, volume, freight corridor) or uses quick scenario presets (**Bullish**, **Bearish**, **Balanced**).
-2. **Telemetry Enrichment**: Django `PredictView` extracts the location (e.g. `Khanna`), calls `AgriWeatherService.get_weather_impact_score()` via OpenWeatherMap API, and scrapes live APMC Mandi spot rates using BeautifulSoup4.
-3. **ML Inference**: `AgriPulseMLPredictor` constructs a **10-feature vector** and evaluates trained Scikit-Learn GBDT pipelines.
-4. **Resilient Response**: Returns predictions (**UP**/**DOWN**), confidence percentages, and target prices to the client. If ML artifacts are missing or unreadable, the system automatically engages a **Mathematical Heuristic Fallback Engine** so the application never crashes.
+1. **User Input & Lazy Loading**: Client uses `React.lazy()` and `React.Suspense` to code-split routes with `SkeletonLoader` shimmer placeholders.
+2. **Round-Robin Balancing**: Node.js BFF gateway `LoadBalancer` intercepts request, selects the next healthy Django worker node (`Node-1` on port 8000 or `Node-2` on port 8001) using round-robin rotation, and auto-retries if a node is down.
+3. **Telemetry Enrichment**: Django worker extracts location (e.g. `Khanna`), queries `AgriWeatherService` via OpenWeatherMap API, and scrapes live APMC Mandi rates using BeautifulSoup4.
+4. **ML Inference**: `AgriPulseMLPredictor` constructs a **10-feature vector** and evaluates trained Scikit-Learn GBDT pipelines (`HistGradientBoostingClassifier`/`Regressor`).
+5. **Resilient Response**: Returns predictions (**UP**/**DOWN**), confidence percentages, and target prices. If ML model artifacts are missing, the system engages a **Mathematical Heuristic Fallback Engine** ensuring 100% availability.
 
 ---
 
 ## ✨ Key Features
 
-- 🤖 **10-Feature Scikit-Learn GBDT Engine**: Dual-model ensemble using `HistGradientBoostingClassifier` and `HistGradientBoostingRegressor` trained on 100,000 multi-variate records (81.09% classification accuracy).
+- ⚖️ **Round-Robin Load Balancer**: Multi-worker dispatch across Django ML instances with automated 15-second health check background pinging and failover retry.
+- 🤖 **10-Feature Scikit-Learn GBDT Engine**: Dual-model ensemble using `HistGradientBoostingClassifier` and `HistGradientBoostingRegressor` trained on 100,000 multi-variate records (81.09% accuracy).
 - 🔄 **Hot-Reloading ML Artifacts**: `AgriPulseMLPredictor` monitors file modification timestamps (`mtime`) of `.joblib` model packages and reloads them dynamically without server downtime.
-- 🛡️ **Dual-Tier AI Fallback Engine**: If machine learning models fail or are uninitialized, a mathematical logit/tree heuristic engine guarantees 100% uptime.
+- 🛡️ **Dual-Tier AI Fallback Engine**: If machine learning models fail or are uninitialized, a mathematical logit/tree heuristic engine guarantees zero-downtime predictions.
+- ⚡ **Skeleton Shimmer UI & Lazy Loading**: Custom CSS shimmer loading components (`SkeletonCard`, `SkeletonTable`, `SkeletonChart`, `PageSkeleton`) combined with `React.lazy()` route code-splitting for zero layout shift.
 - 🌤️ **Live OpenWeatherMap Telemetry**: Converts real-time temperature, humidity, and storm condition codes into an agricultural weather score (`0.0` drought/storm to `1.0` ideal harvest).
 - 🌐 **BeautifulSoup4 APMC Web Scraper**: Scrapes live spot prices from domestic commodity portals and Yahoo Finance, with robust Indian Rupee regex parsing (`₹ 5,420.50/Qtl`).
-- 📱 **Native Mobile App UX**: Bottom navigation bar (`MobileBottomBar.jsx`), minimum $48\times 48\text{px}$ touch targets, and bottom-sheet dialogs.
+- 📱 **Native Mobile App UX**: Bottom navigation bar (`MobileBottomBar.jsx`), minimum $48\times 48\text{px}$ touch targets, and touch-scroll chips.
 - ☀️ **Outdoor Sunlight High-Contrast Mode**: Dedicated high-contrast color scheme (`body.high-contrast`) and color-coded trend badges for outdoor sunlight legibility.
 - 📶 **Progressive Web App (PWA)**: Powered by `vite-plugin-pwa` with 24-hour Workbox `NetworkFirst` API caching and custom Add to Home Screen install prompt (`PwaInstallPrompt.jsx`).
-- 💬 **Interactive AgriChatbot Assistant**: Floating AI Q&A chatbot widget offering specialized guidance on crop protection, fertilizer schedules, mandi price timing, and monsoon advisories.
+- 💬 **Interactive AgriChatbot Assistant**: Floating AI Q&A chatbot widget (`POST /api/chat/query`) offering specialized guidance on crop protection, fertilizer schedules, mandi price timing, and weather advisories.
 
 ---
 
@@ -107,9 +113,11 @@ AgricastAI uses a modular, decoupled three-tier microservice architecture:
 | **Frontend Client** | [React](https://react.dev) | 18.2 | Component-driven Single Page Application |
 | | [Vite](https://vitejs.dev) | 4.4 | Ultra-fast asset bundler & dev server |
 | | [Vite PWA Plugin](https://vite-pwa-org.netlify.app/) | 0.16 | Workbox service worker & PWA manifest generator |
+| | Skeleton Shimmer Library | Custom | Shimmer placeholder UI for lazy loading states |
 | | Vanilla CSS3 | CSS3 | High-contrast design tokens & glassmorphic UI system |
 | **BFF Gateway** | [Node.js](https://nodejs.org) | 18.x | Server runtime environment |
 | | [Express](https://expressjs.com) | 4.18 | API routing, CORS management & proxy dispatcher |
+| | Round-Robin Balancer | Custom | Multi-worker load distribution & health monitoring |
 | | [MongoDB & Mongoose](https://mongoosejs.com) | 7.3 | Database storage for users, OTPs, and audit logs |
 | | [Nodemailer](https://nodemailer.com) | 6.9 | Transactional email delivery for 6-digit OTP codes |
 | **Django ML Engine** | [Django](https://djangoproject.com) | 4.2 | Core Python REST API microservice |
@@ -140,7 +148,7 @@ cd AgriPulse-AI
 
 ---
 
-### Step 2: Set Up Django ML Microservice (Port 8000)
+### Step 2: Set Up Django ML Worker Nodes (Port 8000 & 8001)
 ```bash
 # Navigate to Django service
 cd django-predict-service
@@ -160,8 +168,11 @@ pip install -r requirements.txt
 # Train Scikit-Learn 10-feature GBDT model & export .joblib artifact
 python model/train_model.py
 
-# Start Django development server
+# Start Django Primary Worker Node (Port 8000)
 python manage.py runserver 8000
+
+# (Optional) Start Django Secondary Worker Node (Port 8001 in another terminal)
+# python manage.py runserver 8001
 ```
 
 ---
@@ -175,7 +186,7 @@ cd node-auth-backend
 # Install NPM dependencies
 npm install
 
-# Start Node.js Express server
+# Start Node.js Express server with Round-Robin Load Balancer
 npm start
 ```
 
@@ -215,7 +226,8 @@ OPENWEATHER_API_KEY=your_openweather_api_key_here
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/agricast_db
 JWT_SECRET=agricast_jwt_secret_token_key_2026
-DJANGO_SERVICE_URL=http://127.0.0.1:8000
+DJANGO_WORKER_1=http://127.0.0.1:8000
+DJANGO_WORKER_2=http://127.0.0.1:8001
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_gmail_app_password
 ```
@@ -229,63 +241,29 @@ VITE_API_URL=http://localhost:5000
 
 ## 📡 API Reference
 
-### Main Django REST API Endpoints (`http://127.0.0.1:8000`)
+### Main Express BFF & Load Balancer Endpoints (`http://localhost:5000`)
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/api/v1/predict` | `POST` | Primary ML prediction endpoint. Accepts crop, previous price, supply, transport index, demand score, weather score, and MSP variance. |
-| `/api/v1/commodities` | `GET` | Returns list of supported commodities with live scraped spot prices and trading bounds. |
+| `/api/predict` | `POST` | Dispatches prediction payload to Django worker nodes using Round-Robin rotation. |
+| `/api/predict/history` | `GET` | Fetches recent prediction history for authenticated user (with safe offline fallback). |
+| `/api/chat/query` | `POST` | Interacts with AgriChatbot for crop protection, fertilizer calculations, and market timing. |
+| `/api/commodity-prices` | `GET` | Returns list of supported commodities with live scraped spot prices and trading bounds. |
 | `/api/v1/analytics` | `GET` | Exposes Pandas dataset statistics (`describe()`, correlation matrix, `groupby()` aggregations, IQR outliers). |
-| `/api/v1/model/summary` | `GET` | Returns Scikit-Learn metrics (Confusion Matrix $TP/TN/FP/FN$, accuracy, precision, recall, F1-score, feature importances). |
-| `/api/v1/health` | `GET` | Health check endpoint returning microservice uptime and status. |
-
-#### Sample Prediction Request Payload (`POST /api/v1/predict`)
-```json
-{
-  "crop": "wheat",
-  "previous_price": 2450,
-  "supply_volume": 120,
-  "transport_cost_index": 110,
-  "market_demand_score": 7.5,
-  "location": "Khanna",
-  "weather_impact_score": 0.85,
-  "msp_difference_pct": 0.02
-}
-```
-
-#### Sample Prediction Response Payload
-```json
-{
-  "success": true,
-  "prediction": "UP",
-  "confidence": 88.42,
-  "probability_up": 88.42,
-  "probability_down": 11.58,
-  "target_price": 2573,
-  "execution_method": "Scikit-Learn Production GBDT Engine (v1.3.0)",
-  "telemetry": {
-    "location": "Khanna",
-    "weather_impact_score": 0.85,
-    "msp_difference_pct": 0.02
-  }
-}
-```
+| `/api/v1/model/summary` | `GET` | Returns Scikit-Learn metrics (Confusion Matrix $TP/TN/FP/FN$, accuracy, precision, recall, F1-score). |
+| `/health` | `GET` | Returns BFF gateway health status and target Django service worker status. |
 
 ---
 
-## 🔬 Machine Learning Pipeline
+## 🔬 Machine Learning & Load Balancer Pipeline
 
 1. **Synthetic & Historical Dataset**: 100,000 multi-variate records representing Indian agricultural Mandi trading.
 2. **Feature Matrix (10 Quantitative Features)**:
    - `crop_code`, `previous_price`, `supply_volume`, `transport_cost_index`, `market_demand_score`, `spot_price`, `historical_7d_avg`, `spot_momentum`, `weather_impact_score`, `msp_difference_pct`.
-3. **Classifier**: `HistGradientBoostingClassifier(max_iter=200, learning_rate=0.08, max_depth=8)`
-4. **Regressor**: `HistGradientBoostingRegressor(max_iter=200, learning_rate=0.08, max_depth=8)`
-5. **Validation Results**:
-   - Accuracy: **81.09%**
-   - Sensitivity / Recall: **81.57%**
-   - Specificity: **80.60%**
-   - Precision: **80.99%**
-   - F1-Score: **81.28%**
+3. **Round-Robin Load Distribution**:
+   - `LoadBalancer` cycles requests sequentially across registered worker nodes (`Node-1` $\rightarrow$ `Node-2` $\rightarrow$ `Node-1`).
+   - Automated 15-second background health checks update worker health states.
+4. **Classifier & Regressor**: `HistGradientBoostingClassifier` and `HistGradientBoostingRegressor` (81.09% accuracy).
 
 ---
 
