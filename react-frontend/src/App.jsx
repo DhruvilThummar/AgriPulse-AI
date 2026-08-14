@@ -9,6 +9,8 @@ import AgriChatbot from './components/AgriChatbot';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { BASE_URL } from './services/apiClient';
 
+import { PageSkeleton } from './components/SkeletonLoader';
+
 // Dynamic Route Code-Splitting
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const MarketsView = lazy(() => import('./components/MarketsView'));
@@ -21,13 +23,8 @@ const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const ContactView = lazy(() => import('./components/ContactView'));
 const NotFound = lazy(() => import('./components/NotFound'));
 
-// Loading Fallback Component
-const PageLoadingFallback = () => (
-  <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--clr-outline)' }}>
-    <div className="spinner" style={{ margin: '0 auto 16px', width: '28px', height: '28px' }} />
-    <span style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>Loading AgriPulse Telemetry Module...</span>
-  </div>
-);
+// Loading Fallback Component with Skeleton Shimmer UI
+const PageLoadingFallback = () => <PageSkeleton />;
 
 // Protected Route Guard Component
 const ProtectedRoute = ({ user, children, setShowAuthModal, showToast }) => {

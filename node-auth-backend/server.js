@@ -39,6 +39,7 @@ const commodityRoutes = require('./src/routes/commodityRoutes'); // /api/commodi
 const predictRoutes = require('./src/routes/predictRoutes');   // /api/predict → ML prediction + history
 const subscribeRoutes = require('./src/routes/subscribeRoutes'); // /api/subscribe → newsletter subscriptions
 const inventoryRoutes = require('./src/routes/inventoryRoutes'); // /api/inventory → user stocks persistence
+const chatRoutes = require('./src/routes/chatRoutes');           // /api/chat → AI chatbot query endpoint
 
 // Create the Express application instance
 const app = express();
@@ -93,6 +94,9 @@ app.use(['/api/subscribe', '/api/contact'], subscribeRoutes);
 
 // Inventory routes: handles persistent user stock & cash reserves
 app.use('/api/inventory', inventoryRoutes);
+
+// Chat Assistant routes: handles POST /api/chat/query
+app.use('/api/chat', chatRoutes);
 
 // ── HEALTH CHECK ENDPOINT ──
 // GET /health or GET /api/v1/health → returns BFF server status

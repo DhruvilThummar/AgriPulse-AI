@@ -192,6 +192,9 @@ router.get(['/summary', '/model-summary'], async (req, res) => {
 });
 
 
+const mongoose = require('mongoose');
+const connectDB = require('../config/db');
+
 // ════════════════════════════════════════════════════════════
 // ROUTE: GET /api/predict/history
 // ACCESS: Private (JWT required)
@@ -202,6 +205,15 @@ router.get(['/summary', '/model-summary'], async (req, res) => {
 // ════════════════════════════════════════════════════════════
 router.get('/history', authMiddleware, async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      console.warn('[History Route Warning]: MongoDB uninitialized, returning empty history fallback.');
+      return res.status(200).json({ success: true, history: [], isFallback: true });
+    }
+
     // Prediction.find({ user: req.user.id }): Only get predictions belonging to THIS user
     // .sort({ createdAt: -1 }): Sort by creation time, newest first (-1 = descending)
     // .limit(20): Return at most 20 results (keeps response size manageable)
@@ -212,7 +224,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching prediction history:', error);
-    return res.status(500).json({ error: 'Internal server error fetching prediction history' });
+    return res.status(200).json({ success: true, history: [], isFallback: true, warning: 'MongoDB unavailable' });
   }
 });
 
