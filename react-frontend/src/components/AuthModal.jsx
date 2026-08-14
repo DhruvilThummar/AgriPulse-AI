@@ -134,10 +134,11 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
 
   const inputStyle = {
     width: '100%',
-    padding: '8px 12px',
+    minHeight: '44px',
+    padding: '10px 14px',
     border: '1px solid rgba(1, 45, 29, 0.15)',
-    borderRadius: '6px',
-    background: 'rgba(255, 255, 255, 0.65)',
+    borderRadius: '8px',
+    background: 'rgba(255, 255, 255, 0.75)',
     color: 'var(--clr-on-surface)',
     fontSize: '14px',
     fontFamily: 'var(--font-sans)',
@@ -157,10 +158,10 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   return (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Authentication" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
       <div 
-        className="modal-card" 
+        className="modal-card bottom-sheet-card" 
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'rgba(255, 255, 255, 0.65)',
+          background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           border: '1px solid rgba(255, 255, 255, 0.35)',

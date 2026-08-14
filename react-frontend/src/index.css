@@ -91,6 +91,8 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 html {
@@ -105,12 +107,52 @@ body {
   background-color: var(--clr-background);
   color: var(--clr-on-surface);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-size: var(--txt-body-md);
   line-height: 20px;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/* ─── Scrollbar ─── */
+/* Allow text selection inside text inputs, textareas, and explicit copyable blocks */
+input, textarea, [contenteditable="true"], .selectable, pre, code {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ─── Touch Ergonomics & Immediate Press Feedback ─── */
+button, .btn, a, .mobile-tab-item, .header-icon-btn, .clickable, .card-interactive {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+button:active,
+.btn:active,
+.mobile-tab-item:active,
+.header-icon-btn:active,
+.clickable:active,
+.header-nav-link:active,
+.sidebar-link:active {
+  transform: scale(0.96);
+  opacity: 0.88;
+  transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.08s ease;
+}
+
+/* Minimum 48x48px Touch Target Sizing */
+.btn,
+.header-icon-btn,
+.mobile-tab-item,
+.icon-btn,
+.nav-touch-target {
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Scrollbars & Hide Visually on Mobile ─── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--clr-surface-container-low); }
 ::-webkit-scrollbar-thumb {
@@ -118,6 +160,19 @@ body {
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--clr-outline); }
+
+/* Hide scrollbars visually on mobile & touch scroll elements */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+}
 
 /* ─── Typography ─── */
 h1 {
@@ -1368,17 +1423,110 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
   padding: 20px 16px env(safe-area-inset-bottom, 20px) 16px;
 }
 
+/* ─── Native Mobile Bottom Navigation Bar ─── */
+.mobile-bottom-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--clr-outline-variant);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mobile-bottom-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mobile-tab-item {
+  flex: 1;
+  height: 100%;
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: var(--clr-outline);
+  text-decoration: none;
+  border: none;
+  background: none;
+  transition: color 0.15s ease;
+}
+
+.mobile-tab-item.active {
+  color: var(--clr-primary);
+  font-weight: 700;
+}
+
+.mobile-tab-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.mobile-tab-icon {
+  font-size: 24px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease;
+}
+
+.mobile-tab-item.active .mobile-tab-icon {
+  transform: translateY(-2px) scale(1.12);
+  color: var(--clr-primary);
+}
+
+.mobile-tab-label {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-family: var(--font-sans);
+}
+
+.mobile-active-pill {
+  position: absolute;
+  top: 0;
+  width: 32px;
+  height: 3px;
+  background: var(--clr-primary);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 1px 4px rgba(1, 45, 29, 0.3);
+}
+
+.mobile-tab-badge {
+  position: absolute;
+  top: 0px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--clr-error);
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
 @keyframes slideDrawerLeft {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
 
 @keyframes slideSheetUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-/* ─── Native App Slide-Up Sheet Modals & Responsive Breakpoints ─── */
+/* ─── Native App Mobile Layout Architecture (< 768px) ─── */
 @media (max-width: 1200px) {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -1407,30 +1555,73 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
 }
 
 @media (max-width: 768px) {
-  .sidebar { display: none !important; }
-  .main-content {
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-    padding-top: 68px !important;
+  html, body {
+    height: 100% !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    position: fixed !important;
+    width: 100% !important;
+    inset: 0 !important;
   }
-  .page-container {
-    padding: 0 8px 16px 8px !important;
-  }
-  .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
-  .grid-2 { grid-template-columns: 1fr !important; }
-}
 
-@media (max-width: 640px) {
+  .app-layout {
+    height: 100dvh !important;
+    width: 100vw !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    inset: 0 !important;
+  }
+
+  .sidebar { display: none !important; }
+
+  .top-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    height: calc(58px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid var(--clr-outline-variant) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04) !important;
+  }
+
+  .main-content {
+    flex: 1 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    padding-top: calc(66px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
   .mobile-bottom-bar {
     display: block !important;
   }
 
-  .main-content {
-    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+  .page-container {
+    padding: 0 4px 16px 4px !important;
   }
+
+  .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
 
   /* Transform popups/modals into native bottom sheets */
   .modal-card,
+  .modal-overlay > div,
   div[style*="position: fixed"][style*="zIndex: 100000"] > div {
     max-width: 100% !important;
     width: 100% !important;
@@ -1439,22 +1630,27 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    animation: slideSheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    max-height: 85vh !important;
+    top: auto !important;
+    animation: slideSheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    max-height: 88dvh !important;
     overflow-y: auto !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.2) !important;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   /* Drag handle line indicator for bottom sheet */
   .modal-card::before,
+  .modal-overlay > div::before,
   div[style*="position: fixed"][style*="zIndex: 100000"] > div::before {
     content: '';
     display: block;
-    width: 38px;
-    height: 4px;
+    width: 40px;
+    height: 5px;
     background: var(--clr-outline-variant);
-    border-radius: 2px;
+    border-radius: 3px;
     margin: 0 auto 16px auto;
   }
+}
 
   /* Responsive layout adjustments */
   .top-header {
@@ -1486,7 +1682,7 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
   .grid-4, .grid-3, .grid-2 {
     grid-template-columns: 1fr !important;
   }
-}
+
 
 @media (max-width: 480px) {
   .card, .card-predictor {

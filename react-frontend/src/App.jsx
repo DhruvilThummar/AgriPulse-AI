@@ -279,36 +279,60 @@ export default function App() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.45)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100000
-        }} onClick={() => setShowSettings(false)}>
-          <div style={{
-            width: '340px',
-            background: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255, 255, 255, 0.35)',
-            borderRadius: '16px',
-            boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.25) 0px 0px 0px 1px inset',
-            padding: '24px 20px',
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
-          }} onClick={e => e.stopPropagation()}>
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100000
+          }}
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="modal-card bottom-sheet-card"
+            style={{
+              width: '340px',
+              background: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255, 255, 255, 0.35)',
+              borderRadius: '16px',
+              boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.25) 0px 0px 0px 1px inset',
+              padding: '24px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(1, 45, 29, 0.1)', paddingBottom: '12px' }}>
               <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--clr-primary)' }}>System Preferences</h3>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--clr-on-surface-variant)', padding: '4px', borderRadius: '50%' }} onClick={() => setShowSettings(false)}>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--clr-on-surface-variant)',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  borderRadius: '50%'
+                }}
+                onClick={() => setShowSettings(false)}
+                aria-label="Close preferences"
+              >
                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
               </button>
             </div>
@@ -319,7 +343,7 @@ export default function App() {
                   <input type="checkbox" checked={autoSync} onChange={e => {
                     setAutoSync(e.target.checked);
                     showToast(`Auto-Sync ${e.target.checked ? 'Enabled' : 'Disabled'}`, 'success');
-                  }} style={{ cursor: 'pointer', accentColor: 'var(--clr-primary)', width: '16px', height: '16px' }} />
+                  }} style={{ cursor: 'pointer', accentColor: 'var(--clr-primary)', width: '20px', height: '20px' }} />
                 </div>
                 <span style={{ fontSize: '10px', color: 'var(--clr-on-surface-variant)', display: 'block', marginTop: '4px', lineHeight: '1.4' }}>
                   Automatically pulls fresh satellite crop health scans and IoT sensor data.
@@ -331,7 +355,7 @@ export default function App() {
                   <input type="checkbox" checked={darkMode} onChange={e => {
                     setDarkMode(e.target.checked);
                     showToast(`Contrast theme updated`, 'success');
-                  }} style={{ cursor: 'pointer', accentColor: 'var(--clr-primary)', width: '16px', height: '16px' }} />
+                  }} style={{ cursor: 'pointer', accentColor: 'var(--clr-primary)', width: '20px', height: '20px' }} />
                 </div>
                 <span style={{ fontSize: '10px', color: 'var(--clr-on-surface-variant)', display: 'block', marginTop: '4px', lineHeight: '1.4' }}>
                   Improves readability of charts and tables in bright conditions.
@@ -660,6 +684,7 @@ export default function App() {
       <MobileBottomBar
         user={user}
         onOpenDrawer={() => setShowMobileDrawer(true)}
+        onOpenAuthModal={() => setShowAuthModal(true)}
         unreadNotificationsCount={(notifications || []).filter(n => n?.unread).length}
       />
     </>

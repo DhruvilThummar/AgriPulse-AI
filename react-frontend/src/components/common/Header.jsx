@@ -311,33 +311,46 @@ export default function Header({
         </div>
       </header>
 
-      {/* Mobile Slide-Out Navigation Drawer */}
+      {/* Mobile Navigation Bottom Sheet / Drawer */}
       {isDrawerOpen && (
-        <div className="mobile-drawer-overlay" onClick={() => toggleDrawer(false)}>
-          <div className="mobile-drawer-card" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--clr-outline-variant)' }}>
+        <div className="mobile-drawer-overlay modal-overlay" onClick={() => toggleDrawer(false)}>
+          <div className="mobile-drawer-card modal-card" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--clr-outline-variant)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="material-symbols-outlined icon-filled" style={{ fontSize: '24px', color: 'var(--clr-primary)' }}>monitoring</span>
+                <span className="material-symbols-outlined icon-filled" style={{ fontSize: '26px', color: 'var(--clr-primary)' }}>monitoring</span>
                 <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--clr-primary)' }}>AgriCast AI Menu</span>
               </div>
               <button
+                type="button"
                 onClick={() => toggleDrawer(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-on-surface-variant)', padding: '4px', borderRadius: '50%', display: 'flex' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--clr-on-surface-variant)',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  borderRadius: '50%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                aria-label="Close menu"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
             {user && (
-              <div style={{ background: 'var(--clr-surface-container-low)', padding: '12px', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--clr-outline-variant)' }}>
-                <div className="user-avatar" style={{ width: '36px', height: '36px', fontSize: '14px' }}>
+              <div style={{ background: 'var(--clr-surface-container-low)', padding: '12px 16px', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--clr-outline-variant)' }}>
+                <div className="user-avatar" style={{ width: '40px', height: '40px', fontSize: '15px', display: 'flex', alignItems: 'center', justify: 'center' }}>
                   {user?.email?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--clr-on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {user?.name || user?.email}
                   </div>
-                  <div style={{ fontSize: '10px', color: 'var(--clr-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--clr-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                     <span className="pulse-dot-green" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
                     Active Member
                   </div>
@@ -345,10 +358,10 @@ export default function Header({
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
               {[
-                { id: 'markets', label: 'Markets Feed', icon: 'candlestick_chart' },
                 { id: 'predictions', label: 'ML Price Predictor', icon: 'smart_toy' },
+                { id: 'markets', label: 'Markets Feed', icon: 'candlestick_chart' },
                 { id: 'analytics', label: 'Analytics Telemetry', icon: 'assessment' },
                 { id: 'orders', label: 'Orders & Inventory', icon: 'shopping_cart' },
                 { id: 'how-it-works', label: 'How It Works', icon: 'auto_awesome' },
@@ -364,32 +377,33 @@ export default function Header({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    borderRadius: '10px',
+                    gap: '14px',
+                    padding: '12px 16px',
+                    minHeight: '48px',
+                    borderRadius: '12px',
                     border: 'none',
                     background: activeTab === item.id ? 'var(--clr-secondary-container)' : 'transparent',
                     color: activeTab === item.id ? 'var(--clr-on-secondary-container)' : 'var(--clr-on-surface)',
                     fontWeight: activeTab === item.id ? 700 : 500,
-                    fontSize: '13px',
+                    fontSize: '14px',
                     cursor: 'pointer',
                     textAlign: 'left'
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--clr-primary)' }}>{item.icon}</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '22px', color: 'var(--clr-primary)' }}>{item.icon}</span>
                   {item.label}
                 </button>
               ))}
             </div>
 
-            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--clr-outline-variant)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--clr-on-surface-variant)', padding: '6px 4px' }}>
-                <span>Auto-Sync Data</span>
+            <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--clr-outline-variant)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: 'var(--clr-on-surface-variant)', padding: '6px 4px' }}>
+                <span style={{ fontWeight: 600 }}>Auto-Sync Data</span>
                 <input
                   type="checkbox"
                   checked={autoSync}
                   onChange={e => setAutoSync(e.target.checked)}
-                  style={{ accentColor: 'var(--clr-primary)', cursor: 'pointer' }}
+                  style={{ accentColor: 'var(--clr-primary)', cursor: 'pointer', width: '20px', height: '20px' }}
                 />
               </div>
 
@@ -397,16 +411,16 @@ export default function Header({
                 <button
                   className="btn btn-secondary"
                   onClick={() => { toggleDrawer(false); handleLogout(); }}
-                  style={{ width: '100%', justifyContent: 'center', color: 'var(--clr-error)', borderColor: 'var(--clr-error-container)' }}
+                  style={{ width: '100%', minHeight: '48px', justifyContent: 'center', color: 'var(--clr-error)', borderColor: 'var(--clr-error-container)', fontSize: '14px' }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>logout</span>
                   Sign Out
                 </button>
               ) : (
                 <button
                   className="btn btn-primary"
                   onClick={() => { toggleDrawer(false); setShowAuthModal(true); }}
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  style={{ width: '100%', minHeight: '48px', justifyContent: 'center', fontSize: '14px' }}
                 >
                   Sign In
                 </button>
