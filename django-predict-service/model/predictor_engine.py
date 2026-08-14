@@ -28,23 +28,28 @@ class AgriPulseMLPredictor:
     """
     AgriPulse Scikit-Learn Machine Learning Prediction Engine.
     Executes trained Scikit-Learn GBDT classification & regression models.
+    Supports dynamic hot-reloading when joblib artifacts are updated on disk.
     """
 
     _MODEL_CACHE = None
+    _LAST_MODIFIED = 0
     _ARTIFACT_PATH = os.path.join(os.path.dirname(__file__), 'artifacts', 'agripulse_sklearn_models.joblib')
 
     @classmethod
     def _load_model_artifacts(cls):
         """
         Loads trained Scikit-Learn model package from joblib artifact into memory cache.
+        Implements Hot-Reloading by monitoring file modification time (mtime).
         """
-        if cls._MODEL_CACHE is not None:
-            return cls._MODEL_CACHE
-
         if os.path.exists(cls._ARTIFACT_PATH):
             try:
+                mtime = os.path.getmtime(cls._ARTIFACT_PATH)
+                if cls._MODEL_CACHE is not None and cls._LAST_MODIFIED == mtime:
+                    return cls._MODEL_CACHE
+
                 cls._MODEL_CACHE = joblib.load(cls._ARTIFACT_PATH)
-                print(f"✅ Loaded Scikit-Learn model pipeline from {cls._ARTIFACT_PATH}")
+                cls._LAST_MODIFIED = mtime
+                print(f"✅ Loaded/Hot-reloaded Scikit-Learn model pipeline from {cls._ARTIFACT_PATH} (mtime: {mtime})")
                 return cls._MODEL_CACHE
             except Exception as err:
                 print(f"⚠️ Error loading Scikit-Learn model artifact: {err}")
@@ -95,7 +100,7 @@ class AgriPulseMLPredictor:
         }
 
     @staticmethod
-    def predict(previous_price, supply_volume, transport_cost_index, market_demand_score, crop_code, scraped_data):
+    def predict(previous_price, supply_volume, transport_cost_index, market_demand_score, crop_code, scraped_data, weather_impact_score=0.75, msp_difference_pct=0.02):
         """
         Runs machine learning inference to forecast market price direction and target price.
 
@@ -106,6 +111,8 @@ class AgriPulseMLPredictor:
             market_demand_score  -> Demand rating (1.0 to 10.0)
             crop_code            -> Numeric ID of commodity
             scraped_data         -> Dict with live spot price and 7-day average
+            weather_impact_score -> Weather score (0.0 drought to 1.0 ideal)
+            msp_difference_pct   -> % variance vs Minimum Support Price (e.g. 0.05 = +5%)
 
         RETURNS:
             Dict containing direction ("UP"/"DOWN"), confidence %, target price,
@@ -136,10 +143,10 @@ class AgriPulseMLPredictor:
             try:
                 clf_pipeline = model_package['classifier_pipeline']
                 reg_pipeline = model_package['regressor_pipeline']
-                metrics = model_package.get('metrics', {})
+                metrics = model_package.get('classification_metrics', {}).get('derived_formulas', {})
 
-                # Construct 8-feature array for Scikit-Learn input
-                # [crop_code, previous_price, supply_volume, transport_cost_index, market_demand_score, spot_price, historical_7d_avg, spot_momentum]
+                # Construct 10-feature array for Scikit-Learn input
+                # [crop_code, previous_price, supply_volume, transport_cost_index, market_demand_score, spot_price, historical_7d_avg, spot_momentum, weather_impact_score, msp_difference_pct]
                 X = np.array([[
                     float(crop_code),
                     float(previous_price),
@@ -148,7 +155,9 @@ class AgriPulseMLPredictor:
                     float(market_demand_score),
                     scraped_spot,
                     hist_7d_avg,
-                    spot_momentum
+                    spot_momentum,
+                    float(weather_impact_score),
+                    float(msp_difference_pct)
                 ]], dtype=np.float64)
 
                 # Class 1 = UP, Class 0 = DOWN
@@ -171,38 +180,40 @@ class AgriPulseMLPredictor:
                     "target_price": target_price,
                     "execution_method": f"Scikit-Learn Production GBDT Engine (v{model_package.get('scikit_learn_version', '1.6')})",
                     "dataset_samples": model_package.get('dataset_samples', 100000),
-                    "model_accuracy": metrics.get('accuracy', 83.79),
-                    "model_r2_score": metrics.get('r2_score', 0.9992),
-                    "model_mae_inr": metrics.get('mae_inr', 39.92),
+                    "model_accuracy": metrics.get('accuracy_pct', 85.5),
+                    "model_r2_score": model_package.get('gbdt_regressor_metrics', {}).get('r2_score', 0.999),
+                    "model_mae_inr": model_package.get('gbdt_regressor_metrics', {}).get('mae_inr', 35.0),
                     "sub_models": {
                         "classifier": {
                             "model_type": "HistGradientBoostingClassifier + StandardScaler Pipeline",
                             "prediction": prediction,
                             "probability_up": round(prob_up * 100, 2),
-                            "accuracy": f"{metrics.get('accuracy', 83.79)}%"
+                            "accuracy": f"{metrics.get('accuracy_pct', 85.5)}%"
                         },
                         "regressor": {
                             "model_type": "HistGradientBoostingRegressor + StandardScaler Pipeline",
                             "forecasted_target_price": target_price,
-                            "r2_score": metrics.get('r2_score', 0.9992),
-                            "mae_inr": f"₹{metrics.get('mae_inr', 39.92)}"
+                            "r2_score": model_package.get('gbdt_regressor_metrics', {}).get('r2_score', 0.999),
+                            "mae_inr": f"₹{model_package.get('gbdt_regressor_metrics', {}).get('mae_inr', 35.0)}"
                         }
                     }
                 }
             except Exception as err:
                 print(f"⚠️ Scikit-learn inference error: {err}. Falling back to math engine.")
 
-        # ── FALLBACK MATHEMATICAL ENSEMBLE ENGINE ──
+        # ── FALLBACK MATHEMATICAL ENSEMBLE ENGINE WITH DOMAIN HEURISTICS ──
         historical_diff = (scraped_spot - hist_7d_avg) / max(1.0, hist_7d_avg)
-        demand_weight = (market_demand_score - 5.0) * 0.38
-        supply_pressure = -((supply_volume - 150.0) / 150.0) * 0.28
-        freight_penalty = -((transport_cost_index - 100.0) / 100.0) * 0.14
+        demand_weight = (float(market_demand_score) - 5.0) * 0.38
+        supply_pressure = -((float(supply_volume) - 150.0) / 150.0) * 0.28
+        freight_penalty = -((float(transport_cost_index) - 100.0) / 100.0) * 0.14
+        weather_score = (float(weather_impact_score) - 0.5) * 0.35
+        msp_score = float(msp_difference_pct) * 0.55
         momentum_score = (spot_momentum * 2.5) + (historical_diff * 1.5)
 
-        lr_logit = demand_weight + supply_pressure + freight_penalty + momentum_score
+        lr_logit = demand_weight + supply_pressure + freight_penalty + weather_score + msp_score + momentum_score
         lr_prob_up = 1.0 / (1.0 + math.exp(-lr_logit))
 
-        tree_score = (market_demand_score - 5.0) * 0.15 - ((supply_volume - 150.0) / 150.0) * 0.10 + (spot_momentum * 2.2)
+        tree_score = (float(market_demand_score) - 5.0) * 0.15 - ((float(supply_volume) - 150.0) / 150.0) * 0.10 + (spot_momentum * 2.2) + (float(weather_impact_score) - 0.5) * 0.20 + float(msp_difference_pct) * 0.30
         cb_prob_up = 1.0 / (1.0 + math.exp(-tree_score))
 
         ensemble_prob_up = (lr_prob_up + cb_prob_up) / 2.0
@@ -231,3 +242,4 @@ class AgriPulseMLPredictor:
                 }
             }
         }
+

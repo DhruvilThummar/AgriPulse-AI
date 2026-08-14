@@ -79,11 +79,13 @@ class PredictView(APIView):
         validated_data = serializer.validated_data
 
         # Extract each field from the validated data
-        crop_name    = validated_data['crop']                # e.g. 'wheat'
-        prev_price   = validated_data['previous_price']      # e.g. 2450.0
-        supply_vol   = validated_data['supply_volume']       # e.g. 120.0
-        trans_idx    = validated_data['transport_cost_index'] # e.g. 105.0
-        demand_score = validated_data['market_demand_score']  # e.g. 7.5
+        crop_name      = validated_data['crop']                # e.g. 'wheat'
+        prev_price     = validated_data['previous_price']      # e.g. 2450.0
+        supply_vol     = validated_data['supply_volume']       # e.g. 120.0
+        trans_idx      = validated_data['transport_cost_index'] # e.g. 105.0
+        demand_score   = validated_data['market_demand_score']  # e.g. 7.5
+        weather_impact = validated_data.get('weather_impact_score', 0.75)
+        msp_diff       = validated_data.get('msp_difference_pct', 0.02)
 
         # get_crop_config(): Looks up metadata for this crop (symbol, code, base reference price)
         crop_info = CommodityWebScraper.get_crop_config(crop_name)
@@ -103,7 +105,9 @@ class PredictView(APIView):
             transport_cost_index=trans_idx,
             market_demand_score=demand_score,
             crop_code=crop_code,
-            scraped_data=scraped_data    # Live scraped data is fed directly into the model
+            scraped_data=scraped_data,    # Live scraped data is fed directly into the model
+            weather_impact_score=weather_impact,
+            msp_difference_pct=msp_diff
         )
 
         # ── Step 4: Build and Return Response ──

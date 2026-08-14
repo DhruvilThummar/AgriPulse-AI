@@ -174,12 +174,20 @@ export default function Dashboard({ token, showToast, addNotification }) {
       if (rainfallAnomaly < -10) adjustedDemand = Math.min(10, adjustedDemand + 1);
       else if (rainfallAnomaly > 10) adjustedDemand = Math.max(1, adjustedDemand - 1);
 
+      // Calculate weather impact score (0.0 to 1.0) from rainfall anomaly (-25 to +25%)
+      const weatherImpactScore = Number(Math.min(1.0, Math.max(0.0, 0.75 + (rainfallAnomaly / 100))).toFixed(2));
+      
+      // Calculate MSP difference percentage from tariff/subsidy state
+      const mspDiffPct = Number((Number(tradeTariff) / 100).toFixed(4));
+
       const payload = {
         previous_price: Number(previousPrice),
         supply_volume: Number(supplyVolume),
         transport_cost_index: Math.round(effectiveTransport),
         market_demand_score: adjustedDemand,
-        crop
+        crop,
+        weather_impact_score: weatherImpactScore,
+        msp_difference_pct: mspDiffPct
       };
 
       const predData = await predictService.runPrediction(payload);

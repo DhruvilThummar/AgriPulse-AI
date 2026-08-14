@@ -114,6 +114,7 @@ class CommodityWebScraper:
         Unit 7: Web Scraping with BeautifulSoup & Requests.
         Fetches web page HTML and uses BeautifulSoup .find() and .find_all()
         with HTTP status code handling (200 OK, 404 Not Found, 500 Error).
+        Enhanced regex safely extracts Indian Rupee values like '₹ 5,420.50/Qtl'.
         """
         if not BS4_AVAILABLE or not url:
             return None
@@ -147,14 +148,16 @@ class CommodityWebScraper:
             main_container = soup.find(['main', 'body', 'div'], id=re.compile(r'(market|quote|content)', re.I)) or soup
 
             # Use find_all() for matching price target elements
-            elements = main_container.find_all(['span', 'div', 'td'], class_=re.compile(r'(price|last|quote|rate)', re.I))
+            elements = main_container.find_all(['span', 'div', 'td', 'p'], class_=re.compile(r'(price|last|quote|rate|mandi)', re.I))
 
             for el in elements:
-                text = el.get_text().strip().replace(',', '').replace('₹', '')
-                match = re.search(r'\d+(\.\d+)?', text)
+                raw_text = el.get_text().strip()
+                # Clean Indian Rupee symbols, commas, '/Qtl', '/quintal', 'Rs.'
+                cleaned_text = re.sub(r'(₹|Rs\.?|INR|\/Qtl|\/quintal|,|\s+)', '', raw_text, flags=re.IGNORECASE)
+                match = re.search(r'\d+(\.\d+)?', cleaned_text)
                 if match:
                     num = float(match.group())
-                    if num > 10:
+                    if num > 10.0:
                         return num
 
         except Exception as err:
@@ -165,23 +168,27 @@ class CommodityWebScraper:
     @staticmethod
     def scrape_commodity_data(crop_name):
         """
-        Unit 7: Main Commodity Web Scraper with API & DOM Integration.
+        Unit 7: Main Commodity Web Scraper with API, DOM & APMC Mock Fallback.
         """
         crop_key = str(crop_name).strip().lower()
         config   = CommodityWebScraper.get_crop_config(crop_key)
         base_ref = config['base_ref']
 
+        # Default Mandi Mock Fallback with small dynamic variation if network is unavailable
+        mock_spot = round(base_ref * (1.0 + ((hash(crop_key) % 7) - 3) * 0.012))
+        mock_change = round(((hash(crop_key) % 5) - 2) * 0.45, 2)
+
         result = {
             "crop": crop_key,
             "name": config["name"],
             "code": config["code"],
-            "scraped_spot_price": base_ref,
-            "scraped_change_pct": 0.0,
-            "min_bound": round(base_ref * 0.72),
-            "max_bound": round(base_ref * 1.32),
-            "historical_7d_avg": base_ref,
-            "source": f"Live Web Scraper (BeautifulSoup4: {'ACTIVE' if BS4_AVAILABLE else 'PARSER'})",
-            "scrape_status": "SUCCESS"
+            "scraped_spot_price": mock_spot,
+            "scraped_change_pct": mock_change,
+            "min_bound": round(mock_spot * 0.72),
+            "max_bound": round(mock_spot * 1.32),
+            "historical_7d_avg": round(mock_spot * 0.98),
+            "source": f"APMC Mandi Simulated Telemetry (Mock Fallback - BS4: {'ACTIVE' if BS4_AVAILABLE else 'PARSER'})",
+            "scrape_status": "MOCK_FALLBACK"
         }
 
         try:
@@ -226,6 +233,8 @@ class CommodityWebScraper:
                         result["scraped_change_pct"] = round(change_pct, 2)
                         result["min_bound"] = round(spot * 0.72)
                         result["max_bound"] = round(spot * 1.32)
+                        result["source"] = "Yahoo Finance API Live Scraper"
+                        result["scrape_status"] = "SUCCESS"
 
                     valid_series = [c for c in close_series if c is not None]
                     if valid_series and prev_close:
@@ -243,6 +252,8 @@ class CommodityWebScraper:
                     result["min_bound"]          = round(dom_price * 0.75)
                     result["max_bound"]           = round(dom_price * 1.30)
                     result["historical_7d_avg"]  = round(dom_price * 0.98)
+                    result["source"]             = "BeautifulSoup4 HTML DOM Scraper"
+                    result["scrape_status"]      = "SUCCESS"
 
         except Exception as err:
             result["scrape_status"] = f"SCRAPE_WARNING ({str(err)})"

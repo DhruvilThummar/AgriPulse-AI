@@ -83,6 +83,10 @@ def build_pandas_agricultural_dataset(n_samples=100000, random_state=42):
     spot_prices = np.round(previous_prices * (1.0 + spot_momentum_pct), 2)
     hist_7d_avgs = np.round(spot_prices * (1.0 + np.random.normal(0.0, 0.02, size=n_samples)), 2)
 
+    # Domain-specific quantitative Indian agricultural features
+    weather_impact_scores = np.round(np.random.uniform(0.10, 1.00, size=n_samples), 2)
+    msp_difference_pcts = np.round(np.random.uniform(-0.25, 0.25, size=n_samples), 4)
+
     # 1.1 DataFrame & Series Construction
     raw_data = {
         'crop': crops,                                    # Qualitative data (categorical string)
@@ -92,7 +96,9 @@ def build_pandas_agricultural_dataset(n_samples=100000, random_state=42):
         'transport_cost_index': transport_indices,        # Quantitative float index
         'market_demand_score': demand_scores,             # Quantitative float score
         'spot_price': spot_prices,                        # Quantitative float price
-        'historical_7d_avg': hist_7d_avgs                 # Quantitative float price
+        'historical_7d_avg': hist_7d_avgs,                # Quantitative float price
+        'weather_impact_score': weather_impact_scores,    # Quantitative float (0.0 drought - 1.0 ideal)
+        'msp_difference_pct': msp_difference_pcts          # Quantitative float (% variance vs Govt MSP)
     }
     df = pd.DataFrame(raw_data)
 
@@ -154,7 +160,7 @@ def build_pandas_agricultural_dataset(n_samples=100000, random_state=42):
     dummies_df = pd.get_dummies(df[['crop']], prefix='crop')
 
     # 1.7 Correlation Analysis (corr())
-    numeric_cols = ['previous_price', 'supply_volume', 'transport_cost_index', 'market_demand_score', 'spot_price', 'spot_momentum']
+    numeric_cols = ['previous_price', 'supply_volume', 'transport_cost_index', 'market_demand_score', 'spot_price', 'spot_momentum', 'weather_impact_score', 'msp_difference_pct']
     corr_matrix = df[numeric_cols].corr().round(4).to_dict()
 
     # 1.8 IQR Outlier Detection
@@ -166,15 +172,19 @@ def build_pandas_agricultural_dataset(n_samples=100000, random_state=42):
     outliers_df = df.loc[(df['spot_price'] < lower_bound) | (df['spot_price'] > upper_bound)]
     outlier_count = len(outliers_df)
 
-    # Derived Target Signals
+    # Derived Target Signals incorporating Weather and MSP heuristics
     demand_weight = (df['market_demand_score'] - 5.0) * 0.38
     supply_pressure = -((df['supply_volume'] - 100.0) / 200.0) * 0.28
     freight_penalty = -((df['transport_cost_index'] - 100.0) / 100.0) * 0.14
+    weather_weight = (df['weather_impact_score'] - 0.5) * 0.35
+    msp_weight = df['msp_difference_pct'] * 0.55
 
     latent_signal = (
-        0.35 * demand_weight +
-        0.40 * supply_pressure +
-        0.20 * freight_penalty +
+        0.30 * demand_weight +
+        0.35 * supply_pressure +
+        0.15 * freight_penalty +
+        0.25 * weather_weight +
+        0.35 * msp_weight +
         2.20 * df['spot_momentum'] +
         1.40 * df['historical_diff'] +
         np.random.normal(0.0, 0.25, size=len(df))
@@ -227,24 +237,14 @@ def build_pandas_agricultural_dataset(n_samples=100000, random_state=42):
 def train_models_and_evaluate(df):
     """
     MACHINE LEARNING PREPROCESSING, REGRESSION ANALYSIS & SUPERVISED CLASSIFICATION
-    - Train-Test Split (train_test_split, test_size=0.20, random_state=42)
-    - Feature Scaling (StandardScaler)
-    - Multiple Linear Regression (LinearRegression, fit, predict, coef_, intercept_, R2, MSE, MAE)
-    - Production Gradient Boosting Regressor (HistGradientBoostingRegressor)
-    - k-Nearest Neighbors (KNeighborsClassifier, n_neighbors=5, Euclidean distance)
-    - Decision Tree Classifier (DecisionTreeClassifier, Entropy/Gini, max_depth=8)
-    - Random Forest Classifier (RandomForestClassifier, n_estimators=100)
-    - Support Vector Machine Classifier (SVC, kernel='rbf', C=1.0)
-    - Supervised Classification (HistGradientBoostingClassifier)
-    - Confusion Matrix (TP, TN, FP, FN)
-    - Derived Metrics: Accuracy, Sensitivity/Recall, Specificity, Precision, F1-Score, Error Rate, ROC AUC
     """
     print("⚡Partitioning train/test sets & training ML models...")
 
     feature_cols = [
         'crop_code', 'previous_price', 'supply_volume',
         'transport_cost_index', 'market_demand_score',
-        'spot_price', 'historical_7d_avg', 'spot_momentum'
+        'spot_price', 'historical_7d_avg', 'spot_momentum',
+        'weather_impact_score', 'msp_difference_pct'
     ]
 
     X = df[feature_cols].values

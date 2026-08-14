@@ -72,6 +72,20 @@ class PredictionInputSerializer(serializers.Serializer):
         help_text="Target commodity name"
     )
 
+    weather_impact_score = serializers.FloatField(
+        required=False,
+        default=0.75,
+        min_value=0.0,
+        max_value=1.0,
+        help_text="Weather & monsoon health index (0.0 drought - 1.0 ideal monsoon)"
+    )
+
+    msp_difference_pct = serializers.FloatField(
+        required=False,
+        default=0.02,
+        help_text="Percentage variance vs Minimum Support Price (e.g. 0.05 = +5% over MSP)"
+    )
+
     # ── Custom Field Validator ──
     # validate_crop: This special method runs automatically when is_valid() is called.
     # DRF naming convention: validate_<fieldname>() → runs for that specific field.
