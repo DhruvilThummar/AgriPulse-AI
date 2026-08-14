@@ -42,6 +42,9 @@ from model.scraper import CommodityWebScraper, SUPPORTED_CROPS
 # AgriPulseMLPredictor: runs the mathematical ML ensemble to produce UP/DOWN predictions
 from model.predictor_engine import AgriPulseMLPredictor
 
+# AgriWeatherService: OpenWeatherMap API integration for live agricultural region telemetry
+from model.weather_service import AgriWeatherService
+
 # SERVICE_START_TIME: Records the exact Unix timestamp when the server first started.
 # Used in the /health endpoint to calculate how long the server has been running (uptime).
 SERVICE_START_TIME = time.time()
@@ -54,8 +57,9 @@ SERVICE_START_TIME = time.time()
 # WHAT IT DOES:
 #   Step 1 → Validate the request body using PredictionInputSerializer
 #   Step 2 → Scrape live commodity spot price data from the internet
-#   Step 3 → Feed scraped data + user inputs into the ML prediction engine
-#   Step 4 → Return the prediction result as JSON
+#   Step 3 → Fetch live weather telemetry via OpenWeatherMap API for location
+#   Step 4 → Feed scraped data + user inputs + weather score into the ML prediction engine
+#   Step 5 → Return the prediction result as JSON
 # ──────────────────────────────────────────────────────────────
 class PredictView(APIView):
 
@@ -84,8 +88,13 @@ class PredictView(APIView):
         supply_vol     = validated_data['supply_volume']       # e.g. 120.0
         trans_idx      = validated_data['transport_cost_index'] # e.g. 105.0
         demand_score   = validated_data['market_demand_score']  # e.g. 7.5
-        weather_impact = validated_data.get('weather_impact_score', 0.75)
+        location       = validated_data.get('location', 'Khanna')
+        weather_impact = validated_data.get('weather_impact_score')
         msp_diff       = validated_data.get('msp_difference_pct', 0.02)
+
+        # Dynamic live weather telemetry score lookup if not explicitly provided
+        if weather_impact is None:
+            weather_impact = AgriWeatherService.get_weather_impact_score(location)
 
         # get_crop_config(): Looks up metadata for this crop (symbol, code, base reference price)
         crop_info = CommodityWebScraper.get_crop_config(crop_name)
@@ -109,6 +118,13 @@ class PredictView(APIView):
             weather_impact_score=weather_impact,
             msp_difference_pct=msp_diff
         )
+
+        # Inject weather & location telemetry into response payload
+        prediction_output['telemetry'] = {
+            'location': location,
+            'weather_impact_score': weather_impact,
+            'msp_difference_pct': msp_diff
+        }
 
         # ── Step 4: Build and Return Response ──
         # Combine prediction results + scraping metadata into one response envelope

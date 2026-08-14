@@ -72,12 +72,19 @@ class PredictionInputSerializer(serializers.Serializer):
         help_text="Target commodity name"
     )
 
+    location = serializers.CharField(
+        required=False,
+        default='Khanna',
+        help_text="Target agricultural APMC Mandi city name for live weather telemetry"
+    )
+
     weather_impact_score = serializers.FloatField(
         required=False,
-        default=0.75,
+        default=None,
+        allow_null=True,
         min_value=0.0,
         max_value=1.0,
-        help_text="Weather & monsoon health index (0.0 drought - 1.0 ideal monsoon)"
+        help_text="Weather & monsoon health index (0.0 drought - 1.0 ideal monsoon). If omitted, auto-fetched via OpenWeatherMap API for location."
     )
 
     msp_difference_pct = serializers.FloatField(
