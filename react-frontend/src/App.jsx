@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import Header from './components/common/Header';
+import MobileBottomBar from './components/common/MobileBottomBar';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import AuthModal from './components/AuthModal';
@@ -40,6 +41,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [toast, setToast] = useState(null);
   
   const location = useLocation();
@@ -271,6 +273,8 @@ export default function App() {
         clearNotification={clearNotification}
         markAllNotificationsAsRead={markAllNotificationsAsRead}
         clearAllNotifications={clearAllNotifications}
+        showMobileDrawer={showMobileDrawer}
+        setShowMobileDrawer={setShowMobileDrawer}
       />
 
       {/* Settings Modal */}
@@ -651,6 +655,13 @@ export default function App() {
           <span>{toast.message}</span>
         </div>
       )}
+
+      {/* Floating Mobile Bottom Navigation Bar (< 768px) */}
+      <MobileBottomBar
+        user={user}
+        onOpenDrawer={() => setShowMobileDrawer(true)}
+        unreadNotificationsCount={(notifications || []).filter(n => n?.unread).length}
+      />
     </>
   );
 }

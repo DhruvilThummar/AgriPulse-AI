@@ -339,7 +339,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
             </div>
 
             {/* Inputs Grid 1: Price & Supply */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="prev-price">Previous Price (₹/Qtl)</label>
                 <input 
@@ -374,7 +374,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
             </div>
 
             {/* Inputs Grid 2: Transport & Transit Freight Corridor */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="transport-cost">Transport Cost Index</label>
                 <input 
@@ -411,7 +411,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
             </div>
 
             {/* Inputs Grid 3: Weather Anomaly & Storage Capacity */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="weather-anomaly" style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Monsoon Anomaly</span>

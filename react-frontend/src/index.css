@@ -1188,3 +1188,261 @@ body.high-contrast button.btn-secondary {
   color: #ffffff !important;
 }
 
+/* =========================================================
+   Native Mobile App UI & Responsiveness Design System
+   ========================================================= */
+
+/* ─── Touch Active Haptics & Micro-Interactions ─── */
+.btn:active,
+.header-icon-btn:active,
+.nav-link:active,
+.mandi-ticker-item:active,
+.card:active,
+.mobile-tab-item:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ─── Touch Table Responsive Container ─── */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--clr-outline-variant);
+  background: var(--clr-surface-container-lowest);
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.table-responsive-wrapper table {
+  width: 100%;
+  min-width: 600px; /* Ensures readable columns on mobile scroll */
+  border-collapse: collapse;
+}
+
+/* ─── Horizontal Swipeable Filter Chips ─── */
+.horizontal-scroll-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 8px 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE */
+}
+.horizontal-scroll-chips::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* ─── Floating Mobile Bottom Navigation Bar ─── */
+.mobile-bottom-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.08);
+  z-index: 9999;
+}
+
+body.high-contrast .mobile-bottom-bar {
+  background: rgba(0, 0, 0, 0.95);
+  border-top: 2px solid #ffffff;
+}
+
+.mobile-bottom-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.mobile-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  height: 100%;
+  color: var(--clr-on-surface-variant);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+  font-family: var(--font-sans);
+}
+
+.mobile-tab-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-tab-icon {
+  font-size: 22px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease;
+}
+
+.mobile-tab-item.active .mobile-tab-icon {
+  color: var(--clr-primary);
+  transform: translateY(-2px) scale(1.1);
+}
+
+body.high-contrast .mobile-tab-item.active .mobile-tab-icon {
+  color: #34d399;
+}
+
+.mobile-tab-label {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.mobile-tab-item.active .mobile-tab-label {
+  color: var(--clr-primary);
+  font-weight: 700;
+}
+
+body.high-contrast .mobile-tab-item.active .mobile-tab-label {
+  color: #34d399;
+}
+
+.mobile-active-pill {
+  position: absolute;
+  top: 4px;
+  width: 20px;
+  height: 3px;
+  background: var(--clr-primary);
+  border-radius: 2px;
+}
+
+.mobile-tab-badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--clr-error);
+}
+
+/* ─── Mobile Slide-Out Drawer & Backdrop Overlay ─── */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 100000;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.25s ease;
+}
+
+.mobile-drawer-card {
+  width: min(320px, 85vw);
+  height: 100%;
+  background: var(--clr-surface-container-lowest);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  animation: slideDrawerLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-left: 1px solid var(--clr-outline-variant);
+  padding: 20px 16px env(safe-area-inset-bottom, 20px) 16px;
+}
+
+@keyframes slideDrawerLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ─── Native App Slide-Up Sheet Modals on Mobile ─── */
+@media (max-width: 640px) {
+  .mobile-bottom-bar {
+    display: block;
+  }
+
+  .main-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Transform popups/modals into native bottom sheets */
+  .modal-card,
+  div[style*="position: fixed"][style*="zIndex: 100000"] > div {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    animation: slideSheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Drag handle line indicator for bottom sheet */
+  .modal-card::before,
+  div[style*="position: fixed"][style*="zIndex: 100000"] > div::before {
+    content: '';
+    display: block;
+    width: 38px;
+    height: 4px;
+    background: var(--clr-outline-variant);
+    border-radius: 2px;
+    margin: 0 auto 16px auto;
+  }
+
+  /* Responsive layout adjustments */
+  .top-header {
+    left: 8px !important;
+    right: 8px !important;
+    top: 6px !important;
+    padding: 0 12px !important;
+    height: 52px !important;
+  }
+
+  .header-brand {
+    font-size: 16px !important;
+  }
+
+  .header-search input {
+    width: 130px !important;
+  }
+
+  .header-search input:focus {
+    width: 170px !important;
+  }
+
+  .header-nav {
+    display: none !important;
+  }
+
+  .grid-3, .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+

@@ -188,8 +188,7 @@ export default function MarketsView({ token, autoSync }) {
       </div>
 
       {/* Crop Filter Pills */}
-      <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '8px',
+      <div className="horizontal-scroll-chips" style={{
         marginBottom: '20px', marginTop: '4px',
       }}>
         {CROP_CATEGORIES.map(crop => (

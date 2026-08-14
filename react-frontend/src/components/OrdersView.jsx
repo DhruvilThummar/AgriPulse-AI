@@ -61,7 +61,7 @@ const styles = {
   detailGrid: {
     padding: '16px 20px',
     display: 'grid',
-    gridTemplateColumns: '1.2fr 1.8fr',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
     gap: '16px',
     background: 'var(--clr-surface-container-low)',
     borderTop: '1px solid var(--clr-outline-variant)',
