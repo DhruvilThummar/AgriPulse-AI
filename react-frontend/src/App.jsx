@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import AuthModal from './components/AuthModal';
 import AgriChatbot from './components/AgriChatbot';
+import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { BASE_URL } from './services/apiClient';
 
 // Dynamic Route Code-Splitting
@@ -691,6 +692,9 @@ export default function App() {
 
       {/* Floating Interactive Agritech Q&A AI Chatbot Widget */}
       <AgriChatbot showToast={showToast} />
+
+      {/* PWA Custom Add to Home Screen Install Prompt */}
+      <PwaInstallPrompt showToast={showToast} />
     </>
   );
 }
