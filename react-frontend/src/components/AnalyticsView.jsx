@@ -605,30 +605,52 @@ export default function AnalyticsView({ showToast, autoSync }) {
 
         {/* Satellite Crop Health Card */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ height: '160px', position: 'relative', background: '#081c15' }}>
-            {/* Satellite mock interface */}
-            <img
-              alt="Agricultural field view telemetry"
-              src={
-                ndviValue >= 0.8
-                  ? "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80"
-                  : ndviValue >= 0.6
-                    ? "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=600&q=80"
-                    : ndviValue >= 0.4
-                      ? "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80"
-                      : "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=600&q=80"
-              }
-              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }}
-            />
+          <div style={{ height: '160px', position: 'relative', background: 'linear-gradient(135deg, #021a12 0%, #062c1e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Pure SVG Vector Satellite Radar & Orbital Field Display */}
+            <svg viewBox="0 0 400 160" width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.85 }}>
+              {/* Radar Grid Circles */}
+              <circle cx="200" cy="80" r="30" stroke="rgba(52, 211, 153, 0.2)" strokeWidth="1" fill="none" />
+              <circle cx="200" cy="80" r="60" stroke="rgba(52, 211, 153, 0.25)" strokeWidth="1" strokeDasharray="4 4" fill="none" />
+              <circle cx="200" cy="80" r="90" stroke="rgba(52, 211, 153, 0.15)" strokeWidth="1" fill="none" />
+              <circle cx="200" cy="80" r="120" stroke="rgba(52, 211, 153, 0.1)" strokeWidth="1" fill="none" />
+
+              {/* Crosshair Axes */}
+              <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(52, 211, 153, 0.2)" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1="200" y1="0" x2="200" y2="160" stroke="rgba(52, 211, 153, 0.2)" strokeWidth="1" strokeDasharray="3 3" />
+
+              {/* Vector Field Nodes & Telemetry Heatmap Points */}
+              <g>
+                <circle cx="140" cy="50" r="4" fill="#34d399" opacity="0.8" />
+                <circle cx="170" cy="110" r="5" fill="#10b981" opacity="0.9" />
+                <circle cx="250" cy="65" r="6" fill="#34d399" opacity="0.85" />
+                <circle cx="280" cy="120" r="4" fill="#60a5fa" opacity="0.7" />
+                <line x1="140" y1="50" x2="170" y2="110" stroke="rgba(52, 211, 153, 0.3)" strokeWidth="1" />
+                <line x1="170" y1="110" x2="250" y2="65" stroke="rgba(52, 211, 153, 0.3)" strokeWidth="1" />
+                <line x1="250" y1="65" x2="280" y2="120" stroke="rgba(52, 211, 153, 0.3)" strokeWidth="1" />
+              </g>
+
+              {/* Satellite Icon in Orbit */}
+              <g transform="translate(190, 70)">
+                <circle cx="10" cy="10" r="8" fill="rgba(52, 211, 153, 0.25)" />
+                <circle cx="10" cy="10" r="4" fill="#34d399" />
+              </g>
+            </svg>
+
             {/* Scanning radar indicator */}
             <div style={{
               position: 'absolute', top: '15px', left: '15px',
-              width: '10px', height: '10px', borderRadius: '50%',
-              background: '#22c55e', boxShadow: '0 0 10px #22c55e',
-              animation: 'pulse 1.5s infinite'
-            }} />
-            <div style={{ position: 'absolute', bottom: '10px', left: '15px', color: '#fff', fontSize: '10px', fontFamily: 'var(--font-mono)', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
-              SAT-RECON-5 // RESOLUTION: 0.5m/px
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px',
+              border: '1px solid rgba(52, 211, 153, 0.3)', backdropFilter: 'blur(8px)'
+            }}>
+              <span className="pulse-dot-green" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
+              <span style={{ color: '#34d399', fontSize: '10px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                SENTINEL-2 VECTOR ORBIT
+              </span>
+            </div>
+
+            <div style={{ position: 'absolute', bottom: '10px', right: '15px', color: 'rgba(255,255,255,0.85)', fontSize: '10px', fontFamily: 'var(--font-mono)', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.15)' }}>
+              RECON RADAR // RESOLUTION: 0.5m/px
             </div>
           </div>
 

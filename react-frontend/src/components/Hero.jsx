@@ -149,7 +149,7 @@ export default function Hero({ user, onGetStarted }) {
           display: 'flex',
           flexWrap: 'wrap',
           marginTop: '72px',
-          maxWidth: '700px',
+          maxWidth: '740px',
           width: '100%',
           borderRadius: '20px',
           padding: 0
@@ -158,39 +158,42 @@ export default function Hero({ user, onGetStarted }) {
         aria-label="Platform statistics"
       >
         {[
-          { val: stats.modelAccuracy, lbl: 'Model Accuracy' },
-          { val: stats.commoditiesCount,   lbl: 'Commodities' },
-          { val: stats.dailyVolume, lbl: 'Daily Volume' },
-          { val: stats.statesCovered,    lbl: 'States Covered' },
+          { val: stats.modelAccuracy, lbl: 'Model Accuracy', icon: 'verified_user' },
+          { val: stats.commoditiesCount, lbl: 'Commodities', icon: 'agriculture' },
+          { val: stats.dailyVolume, lbl: 'Daily Volume', icon: 'payments' },
+          { val: stats.statesCovered, lbl: 'States Covered', icon: 'map' },
         ].map((stat, idx, arr) => (
           <div
             key={idx}
             style={{
-              flex: '1 1 140px',
-              padding: '24px 16px',
+              flex: '1 1 150px',
+              padding: '20px 16px',
               textAlign: 'center',
               borderRight: idx < arr.length - 1 ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
             }}
           >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#34d399' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{stat.icon}</span>
+              <span
+                style={{
+                  fontSize: '26px',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-mono)',
+                  lineHeight: 1.2,
+                }}
+              >
+                {stat.val}
+              </span>
+            </div>
             <span
               style={{
-                display: 'block',
-                fontSize: '28px',
-                fontWeight: 700,
-                color: '#34d399',
-                fontFamily: 'var(--font-mono)',
-                lineHeight: 1.2,
-              }}
-            >
-              {stat.val}
-            </span>
-            <span
-              style={{
-                display: 'block',
                 fontSize: '11px',
                 color: 'rgba(255, 255, 255, 0.75)',
                 fontWeight: 600,
-                marginTop: '6px',
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
               }}
