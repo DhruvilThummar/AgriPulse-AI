@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import axios from 'axios';
-import { BASE_URL } from '../services/apiClient';
+import { formatINR } from '../utils/agriHelpers';
 
 /* ─── Inline Styles for premium glassmorphic UI ─── */
 const styles = {

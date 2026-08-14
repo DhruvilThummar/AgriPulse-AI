@@ -1,19 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-import { BASE_URL } from '../services/apiClient';
+import { predictService } from '../services/predictService';
+import { marketService } from '../services/marketService';
+import { getTrendBadge, getCropDisplayName, CROP_LABEL_MAP } from '../utils/agriHelpers';
 
-const CROP_OPTIONS = [
-  { value: 'wheat', label: 'Wheat (Premium)' },
-  { value: 'rice', label: 'Basmati Rice' },
-  { value: 'corn', label: 'Yellow Corn' },
-  { value: 'cotton', label: 'Shankar-6 Cotton' },
-  { value: 'soybean', label: 'Soybean Yellow' },
-  { value: 'sugarcane', label: 'Sugarcane Raw' },
-  { value: 'mustard', label: 'Mustard Seed' },
-  { value: 'groundnut', label: 'Groundnut Bold' },
-  { value: 'turmeric', label: 'Salem Turmeric' },
-  { value: 'chilli', label: 'Guntur Chilli Red' }
-];
+const CROP_OPTIONS = Object.entries(CROP_LABEL_MAP).map(([value, label]) => ({ value, label }));
 
 export default function Dashboard({ token, showToast, addNotification }) {
   // Form Inputs State
@@ -79,16 +69,12 @@ export default function Dashboard({ token, showToast, addNotification }) {
     setCurrentPage(1);
   }, [historyFilter]);
 
-  const activeToken = token || localStorage.getItem('agripulse_token');
-
   // Fetch prediction log history
   const fetchHistory = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/predict/history`, {
-        headers: { Authorization: `Bearer ${activeToken}` }
-      });
-      if (response.data?.success) {
-        setHistory(response.data.history || []);
+      const data = await predictService.getHistory();
+      if (data?.history) {
+        setHistory(data.history || []);
       }
     } catch (error) {
       console.error('Failed to fetch prediction history:', error);
@@ -101,9 +87,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
   const handleClearHistory = async () => {
     if (!window.confirm('Are you sure you want to clear all prediction logs?')) return;
     try {
-      await axios.delete(`${BASE_URL}/predict/history`, {
-        headers: { Authorization: `Bearer ${activeToken}` }
-      });
+      await predictService.clearAllHistory();
       setHistory([]);
       if (showToast) showToast('Prediction log history cleared', 'success');
     } catch (error) {
@@ -115,9 +99,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
   // Delete single log entry
   const handleDeleteSingleLog = async (id) => {
     try {
-      await axios.delete(`${BASE_URL}/predict/history/${id}`, {
-        headers: { Authorization: `Bearer ${activeToken}` }
-      });
+      await predictService.deleteHistoryItem(id);
       setHistory(prev => prev.filter(item => item._id !== id));
       if (showToast) showToast('Record deleted', 'success');
     } catch (error) {
@@ -142,11 +124,9 @@ export default function Dashboard({ token, showToast, addNotification }) {
   // Fetch live scraped commodities to get current market rates
   const fetchCommodities = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/commodity-prices`, {
-        headers: { Authorization: `Bearer ${activeToken}` }
-      });
-      if (response.data?.success) {
-        setCommodities(response.data.commodities || []);
+      const data = await marketService.getLivePrices();
+      if (data?.commodities) {
+        setCommodities(data.commodities || []);
       }
     } catch (error) {
       console.error('Failed to fetch commodities for predictor:', error);
@@ -154,11 +134,9 @@ export default function Dashboard({ token, showToast, addNotification }) {
   };
 
   useEffect(() => {
-    if (activeToken) {
-      fetchHistory();
-      fetchCommodities();
-    }
-  }, [activeToken]);
+    fetchHistory();
+    fetchCommodities();
+  }, []);
 
   // Automatically update the Previous Price input when crop changes
   useEffect(() => {
@@ -204,45 +182,13 @@ export default function Dashboard({ token, showToast, addNotification }) {
         crop
       };
 
-      let predData;
-      try {
-        const response = await axios.post(`${BASE_URL}/predict`, payload, {
-          headers: { Authorization: `Bearer ${activeToken}` }
-        });
-        predData = response.data;
-      } catch (networkErr) {
-        console.warn('Backend API connection failed, executing client-side ML fallback algorithm:', networkErr.message);
-        // High-precision client-side ensemble prediction fallback logic
-        const pPrice = Number(previousPrice) || 2000;
-        const sVol = Number(supplyVolume) || 500;
-        const tCost = Math.round(effectiveTransport) || 100;
-        const mDemand = adjustedDemand || 5;
-
-        // Price change score calculation matching backend feature weights
-        const demandWeight = (mDemand - 5) * 0.08;
-        const supplyWeight = (500 - sVol) * 0.0004;
-        const transportWeight = (100 - tCost) * 0.002;
-        const compositeScore = demandWeight + supplyWeight + transportWeight;
-
-        const isUp = compositeScore >= 0;
-        const confidenceVal = Math.min(98.5, Math.max(62.0, 75.0 + Math.abs(compositeScore) * 20));
-        const probUp = isUp ? (confidenceVal / 100) : ((100 - confidenceVal) / 100);
-
-        predData = {
-          crop: crop.toLowerCase(),
-          prediction: isUp ? 'UP' : 'DOWN',
-          confidence: Number(confidenceVal.toFixed(2)),
-          probability_up: Number(probUp.toFixed(4)),
-          predicted_price: Math.round(pPrice * (isUp ? 1 + Math.abs(compositeScore) * 0.05 : 1 - Math.abs(compositeScore) * 0.05)),
-          isFallback: true
-        };
-      }
-
+      const predData = await predictService.runPrediction(payload);
       setResult(predData);
+
       showToast(predData.isFallback ? 'Market trend calculated (Offline ML Fallback active)' : 'Market trend calculated successfully!', 'success');
       
       if (addNotification) {
-        const cropLabel = getCropLabel(crop);
+        const cropLabel = getCropDisplayName(crop);
         const prediction = predData.prediction;
         const confidence = predData.confidence;
         addNotification(`ML Engine: Calculated tomorrow's ${cropLabel} trend as ${prediction ? prediction.toUpperCase() : 'UNKNOWN'} (${Number(confidence || 0).toFixed(0)}% confidence).`);
@@ -252,8 +198,7 @@ export default function Dashboard({ token, showToast, addNotification }) {
       fetchHistory();
     } catch (error) {
       console.error('Prediction failed:', error);
-      const errMsg = error.response?.data?.error || 'Failed to complete prediction.';
-      showToast(errMsg, 'error');
+      showToast(error.message || 'Failed to complete prediction.', 'error');
     } finally {
       setLoading(false);
     }

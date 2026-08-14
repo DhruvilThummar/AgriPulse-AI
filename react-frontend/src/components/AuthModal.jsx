@@ -1,12 +1,5 @@
-/**
- * Module Name: AuthModal
- * Purpose: Agritech Authentication Dialog — Login, Sign Up, OTP verification, and Password Reset.
- * Optimized for Mobile Phone View (Native Bottom Sheet, 48px touch targets, password eye toggle, iOS zoom fix).
- */
-
 import React, { useState, useMemo } from 'react';
-import axios from 'axios';
-import { BASE_URL } from '../services/apiClient';
+import { authService } from '../services/authService';
 
 // ── Password Validation Rules ──
 const PASSWORD_RULES = [
@@ -44,16 +37,17 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     if (!email || !password) { setError('Please fill in all required fields'); return; }
     setError(''); setLoading(true);
     try {
-      const { data } = await axios.post(`${BASE_URL}/auth/login`, { email, password }, { timeout: 12000 });
+      const data = await authService.login(email, password);
+      authService.saveSession(data.user, data.token);
       onAuthSuccess(data.user, data.token);
       showToast('Logged in successfully', 'success');
       onClose();
     } catch (err) {
-      if (err.response?.status === 403 && err.response?.data?.unverified) {
+      if (err.status === 403 && err.data?.unverified) {
         showToast('Account unverified — OTP sent to your email', 'error');
         setView('otp');
       } else {
-        setError(err.response?.data?.error || err.response?.data?.message || 'Login failed. Please check your credentials.');
+        setError(err.message || 'Login failed. Please check your credentials.');
       }
     } finally { setLoading(false); }
   };
@@ -70,11 +64,11 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
 
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/signup`, { name, email, password }, { timeout: 12000 });
+      await authService.signup(name, email, password);
       showToast('OTP sent to your email address', 'success');
       setView('otp');
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'Sign-up failed. Please try again.');
+      setError(err.message || 'Sign-up failed. Please try again.');
     } finally { setLoading(false); }
   };
 
@@ -84,11 +78,11 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     if (!otpCode || otpCode.length !== 6) { setError('Please enter the full 6-digit verification code'); return; }
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/verify-otp`, { email, otp: otpCode }, { timeout: 12000 });
+      await authService.verifyOtp(email, otpCode);
       showToast('Account verified! Please sign in.', 'success');
       setView('login'); setPassword(''); setOtpCode('');
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'OTP verification failed.');
+      setError(err.message || 'OTP verification failed.');
     } finally { setLoading(false); }
   };
 
@@ -98,13 +92,13 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     if (!email) { setError('Please enter your registered email address'); return; }
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/forgot-password`, { email }, { timeout: 12000 });
+      await authService.forgotPassword(email);
       showToast('Password reset OTP sent to your email', 'success');
       setView('reset');
       setPassword('');
       setOtpCode('');
     } catch (err) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to send reset code. Please try again.');
+      setError(err.message || 'Failed to send reset code. Please try again.');
     } finally { setLoading(false); }
   };
 

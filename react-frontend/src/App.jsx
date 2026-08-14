@@ -5,6 +5,7 @@ import MobileBottomBar from './components/common/MobileBottomBar';
 import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import AuthModal from './components/AuthModal';
+import AgriChatbot from './components/AgriChatbot';
 import { BASE_URL } from './services/apiClient';
 
 // Dynamic Route Code-Splitting
@@ -687,6 +688,9 @@ export default function App() {
         onOpenAuthModal={() => setShowAuthModal(true)}
         unreadNotificationsCount={(notifications || []).filter(n => n?.unread).length}
       />
+
+      {/* Floating Interactive Agritech Q&A AI Chatbot Widget */}
+      <AgriChatbot showToast={showToast} />
     </>
   );
 }

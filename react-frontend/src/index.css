@@ -1712,5 +1712,121 @@ body.high-contrast .mobile-tab-item.active .mobile-tab-label {
   }
 }
 
+/* ─── Skeleton Loading Shimmer ─── */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, var(--clr-surface-container-low) 0px, var(--clr-surface-container-highest) 40px, var(--clr-surface-container-low) 80px);
+  background-size: 600px 100%;
+  animation: skeleton-shimmer 1.4s infinite ease-in-out;
+  border-radius: var(--radius-md);
+}
+
+/* ─── Outdoor Sunlight High Contrast Mode Overrides ─── */
+body.high-contrast {
+  --clr-background: #0f172a;
+  --clr-surface: #1e293b;
+  --clr-surface-container-lowest: #0f172a;
+  --clr-surface-container-low: #1e293b;
+  --clr-surface-container: #334155;
+  --clr-on-surface: #f8fafc;
+  --clr-on-surface-variant: #cbd5e1;
+  --clr-outline-variant: #475569;
+  --clr-primary: #10b981;
+  --clr-on-primary: #022c22;
+}
+
+body.high-contrast .card,
+body.high-contrast .card-predictor {
+  border-color: #475569 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* ─── Touch Target Size Enforcement (Min 48x48px) ─── */
+.btn,
+.mobile-tab-item,
+button,
+input[type="checkbox"],
+input[type="submit"] {
+  min-height: 44px;
+}
+
+@media (max-width: 768px) {
+  .btn,
+  .mobile-tab-item,
+  button,
+  .icon-btn {
+    min-height: 48px !important;
+    min-width: 48px !important;
+  }
+}
+
+/* ─── AgriChatbot Floating Widget Styles ─── */
+.agri-chatbot-fab {
+  position: fixed;
+  bottom: 84px;
+  right: 20px;
+  z-index: 99999;
+  background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-secondary) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(1, 45, 29, 0.35);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agri-chatbot-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(1, 45, 29, 0.45);
+}
+
+.agri-chatbot-window {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 520px;
+  max-height: calc(100dvh - 120px);
+  background: var(--clr-surface-container-lowest);
+  border: 1px solid var(--clr-outline-variant);
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUpFade 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 480px) {
+  .agri-chatbot-window {
+    right: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 85dvh !important;
+    max-height: 85dvh !important;
+    border-radius: 24px 24px 0 0 !important;
+  }
+  .agri-chatbot-fab {
+    bottom: 78px;
+    right: 16px;
+    padding: 10px 16px;
+  }
+}
+
+
 
 

@@ -1,12 +1,6 @@
-/**
- * Module Name: MarketsView
- * Purpose: Displays real-time commodity market prices fetched via API with crop filtering and live updates.
- * Redesigned to fetch data from /api/commodity-prices instead of hardcoded values.
- */
-
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { BASE_URL } from '../services/apiClient';
+import { marketService } from '../services/marketService';
+import { formatINR } from '../utils/agriHelpers';
 
 // All available crop categories for filtering
 const CROP_CATEGORIES = ['All', 'Wheat', 'Rice', 'Corn', 'Cotton', 'Soybean', 'Sugarcane', 'Mustard', 'Groundnut', 'Turmeric', 'Chilli'];
@@ -43,10 +37,7 @@ export default function MarketsView({ token, autoSync }) {
   // Track previous prices to determine changes for flash animation
   const fetchCommodityPrices = async () => {
     try {
-      const savedToken = token || localStorage.getItem('agripulse_token');
-      const { data } = await axios.get(`${BASE_URL}/commodity-prices`, {
-        headers: { Authorization: `Bearer ${savedToken}` }
-      });
+      const data = await marketService.getLivePrices();
       const newComms = data.commodities || [];
       
       if (commodities.length > 0) {

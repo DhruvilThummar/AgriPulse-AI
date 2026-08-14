@@ -4,9 +4,8 @@
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import axios from 'axios';
 import { predictService } from '../services/predictService';
-import { BASE_URL } from '../services/apiClient';
+import { formatINR } from '../utils/agriHelpers';
 
 // Monthly price datasets (₹/Quintal) for the last 12 months to generate dynamic charts
 const HISTORICAL_DATASETS = {
