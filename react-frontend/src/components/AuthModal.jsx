@@ -1,8 +1,7 @@
 /**
  * Module Name: AuthModal
- * Purpose: Authentication dialog — Login, Sign Up, OTP verification, and Forgot Password screens.
- * Redesigned to match Stitch light-mode design: white card, green focus ring, clean typography.
- * Now includes Forgot Password flow via Email OTP.
+ * Purpose: Agritech Authentication Dialog — Login, Sign Up, OTP verification, and Password Reset.
+ * Optimized for Mobile Phone View (Native Bottom Sheet, 48px touch targets, password eye toggle, iOS zoom fix).
  */
 
 import React, { useState, useMemo } from 'react';
@@ -18,15 +17,16 @@ const PASSWORD_RULES = [
 ];
 
 export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
-  const [view,     setView]     = useState('login'); // 'login' | 'signup' | 'otp' | 'forgot' | 'reset'
-  const [name,     setName]     = useState('');
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [otpCode,  setOtpCode]  = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
+  const [view,          setView]          = useState('login'); // 'login' | 'signup' | 'otp' | 'forgot' | 'reset'
+  const [name,          setName]          = useState('');
+  const [email,         setEmail]         = useState('');
+  const [password,      setPassword]      = useState('');
+  const [otpCode,       setOtpCode]       = useState('');
+  const [showPassword,  setShowPassword]  = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState('');
 
-  const switchView = (v) => { setView(v); setError(''); };
+  const switchView = (v) => { setView(v); setError(''); setShowPassword(false); };
 
   // ── Password Validation State ──
   const passwordChecks = useMemo(() => {
@@ -41,10 +41,10 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   // ── Login ──
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError('Please fill in all fields'); return; }
+    if (!email || !password) { setError('Please fill in all required fields'); return; }
     setError(''); setLoading(true);
     try {
-      const { data } = await axios.post(`${BASE_URL}/auth/login`, { email, password });
+      const { data } = await axios.post(`${BASE_URL}/auth/login`, { email, password }, { timeout: 12000 });
       onAuthSuccess(data.user, data.token);
       showToast('Logged in successfully', 'success');
       onClose();
@@ -61,18 +61,17 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   // ── Sign Up ──
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError('Please fill in all fields'); return; }
+    if (!email || !password) { setError('Please fill in all required fields'); return; }
 
-    // Client-side password validation
     if (!allPasswordRulesPassed) {
-      setError('Password does not meet all requirements');
+      setError('Password does not meet all security requirements');
       return;
     }
 
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/signup`, { name, email, password });
-      showToast('OTP sent to your email', 'success');
+      await axios.post(`${BASE_URL}/auth/signup`, { name, email, password }, { timeout: 12000 });
+      showToast('OTP sent to your email address', 'success');
       setView('otp');
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || 'Sign-up failed. Please try again.');
@@ -82,11 +81,11 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   // ── OTP Verification ──
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    if (!otpCode || otpCode.length !== 6) { setError('Please enter the 6-digit code'); return; }
+    if (!otpCode || otpCode.length !== 6) { setError('Please enter the full 6-digit verification code'); return; }
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/verify-otp`, { email, otp: otpCode });
-      showToast('Account verified! You can now sign in.', 'success');
+      await axios.post(`${BASE_URL}/auth/verify-otp`, { email, otp: otpCode }, { timeout: 12000 });
+      showToast('Account verified! Please sign in.', 'success');
       setView('login'); setPassword(''); setOtpCode('');
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || 'OTP verification failed.');
@@ -96,10 +95,10 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
   // ── Forgot Password Request ──
   const handleForgotPasswordSubmit = async (e) => {
     e.preventDefault();
-    if (!email) { setError('Please enter your email address'); return; }
+    if (!email) { setError('Please enter your registered email address'); return; }
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
+      await axios.post(`${BASE_URL}/auth/forgot-password`, { email }, { timeout: 12000 });
       showToast('Password reset OTP sent to your email', 'success');
       setView('reset');
       setPassword('');
@@ -116,13 +115,13 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     if (!password) { setError('Please enter a new password'); return; }
 
     if (!allPasswordRulesPassed) {
-      setError('Password does not meet all requirements');
+      setError('Password does not meet security requirements');
       return;
     }
 
     setError(''); setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/auth/reset-password`, { email, otp: otpCode, newPassword: password });
+      await axios.post(`${BASE_URL}/auth/reset-password`, { email, otp: otpCode, newPassword: password }, { timeout: 12000 });
       showToast('Password reset successfully! Please sign in.', 'success');
       setView('login');
       setPassword('');
@@ -132,68 +131,134 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     } finally { setLoading(false); }
   };
 
+  // Touch Ergonomics & Mobile Input Style (16px prevents iOS Safari auto-zoom)
   const inputStyle = {
     width: '100%',
-    minHeight: '44px',
-    padding: '10px 14px',
-    border: '1px solid rgba(1, 45, 29, 0.15)',
-    borderRadius: '8px',
-    background: 'rgba(255, 255, 255, 0.75)',
+    minHeight: '48px',
+    padding: '12px 14px',
+    border: '1px solid rgba(1, 45, 29, 0.2)',
+    borderRadius: '10px',
+    background: 'var(--clr-surface-container-lowest)',
     color: 'var(--clr-on-surface)',
-    fontSize: '14px',
+    fontSize: '16px',
     fontFamily: 'var(--font-sans)',
     outline: 'none',
-    transition: 'border-color 0.15s, box-shadow 0.15s',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   const labelStyle = {
     display: 'block',
-    fontSize: '12px',
-    fontWeight: 500,
-    color: 'var(--clr-on-surface-variant)',
-    marginBottom: '4px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--clr-on-surface)',
+    marginBottom: '6px',
     letterSpacing: '0.01em',
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Authentication" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Authentication"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 100000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0, 0, 0, 0.55)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}
+    >
       <div 
         className="modal-card bottom-sheet-card" 
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'rgba(255, 255, 255, 0.85)',
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255, 255, 255, 0.35)',
-          borderRadius: '16px',
-          padding: '24px 28px',
-          boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.25)',
+          border: '1px solid rgba(255, 255, 255, 0.5)',
+          borderRadius: '20px',
+          padding: '20px 24px calc(24px + env(safe-area-inset-bottom, 0px)) 24px',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.2)',
           width: '100%',
-          maxWidth: '400px',
-          boxSizing: 'border-box'
+          maxWidth: '420px',
+          boxSizing: 'border-box',
+          maxHeight: '90dvh',
+          overflowY: 'auto'
         }}
       >
+        {/* ── Top Header with Brand Mark & Touch-Friendly Close Trigger ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid rgba(1, 45, 29, 0.1)', paddingBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="material-symbols-outlined icon-filled" style={{ color: 'var(--clr-primary)', fontSize: '26px' }}>monitoring</span>
+            <span style={{ fontWeight: 700, fontSize: '17px', color: 'var(--clr-primary)', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em' }}>AgriCast AI</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--clr-on-surface-variant)',
+              minWidth: '48px',
+              minHeight: '48px',
+              borderRadius: '50%',
+              marginRight: '-8px'
+            }}
+            aria-label="Close authentication modal"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>close</span>
+          </button>
+        </div>
 
         {/* ── OTP View ── */}
         {view === 'otp' && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <button
+                type="button"
                 onClick={() => switchView('signup')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', color: 'var(--clr-on-surface-variant)', marginLeft: '-8px', display: 'flex' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  borderRadius: '50%',
+                  color: 'var(--clr-on-surface-variant)',
+                  marginLeft: '-12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
                 aria-label="Back"
               >
                 <span className="material-symbols-outlined">arrow_back</span>
               </button>
-              <h2 style={{ marginLeft: '8px', fontSize: '24px', fontWeight: 600 }}>Verify Account</h2>
+              <h2 style={{ marginLeft: '4px', fontSize: '22px', fontWeight: 700, color: 'var(--clr-on-surface)' }}>Verify Account</h2>
             </div>
-            <p style={{ fontSize: '14px', marginBottom: '24px', textAlign: 'center' }}>
-              Enter the 6-digit code sent to <strong>{email}</strong>
+            <p style={{ fontSize: '14px', marginBottom: '20px', textAlign: 'center', color: 'var(--clr-on-surface-variant)' }}>
+              Enter the 6-digit verification code sent to <strong>{email}</strong>
             </p>
 
             {error && (
-              <div style={{ padding: '10px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
-                {error}
+              <div style={{ padding: '12px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
+                <span>{error}</span>
               </div>
             )}
 
@@ -201,8 +266,10 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
               <input
                 id="otp-code-input"
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength="6"
-                placeholder="––––––"
+                placeholder="• • • • • •"
                 value={otpCode}
                 onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                 style={{
@@ -212,14 +279,21 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                   letterSpacing: '12px',
                   fontFamily: 'var(--font-mono)',
                   padding: '12px',
+                  fontWeight: 700,
+                  color: 'var(--clr-primary)',
                 }}
                 onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
                 required
                 aria-label="OTP code"
               />
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', height: '40px', justifyContent: 'center' }} disabled={loading}>
-                {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : 'Verify Account'}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ width: '100%', minHeight: '48px', fontSize: '15px', fontWeight: 700, justifyContent: 'center', marginTop: '4px' }}
+                disabled={loading}
+              >
+                {loading ? <div className="spinner" style={{ width: '18px', height: '18px' }} /> : 'Verify Account'}
               </button>
             </form>
           </>
@@ -228,23 +302,38 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
         {/* ── Forgot Password Request View ── */}
         {view === 'forgot' && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
               <button
+                type="button"
                 onClick={() => switchView('login')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', color: 'var(--clr-on-surface-variant)', marginLeft: '-8px', display: 'flex' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  borderRadius: '50%',
+                  color: 'var(--clr-on-surface-variant)',
+                  marginLeft: '-12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
                 aria-label="Back to Login"
               >
                 <span className="material-symbols-outlined">arrow_back</span>
               </button>
-              <h2 style={{ marginLeft: '8px', fontSize: '24px', fontWeight: 600 }}>Reset Password</h2>
+              <h2 style={{ marginLeft: '4px', fontSize: '22px', fontWeight: 700, color: 'var(--clr-on-surface)' }}>Reset Password</h2>
             </div>
-            <p style={{ fontSize: '14px', marginBottom: '24px', color: 'var(--clr-on-surface-variant)' }}>
-              Enter your account email address below to receive a 6-digit password reset code.
+            <p style={{ fontSize: '13px', marginBottom: '20px', color: 'var(--clr-on-surface-variant)', lineHeight: 1.5 }}>
+              Enter your registered account email to receive a 6-digit password reset verification code.
             </p>
 
             {error && (
-              <div style={{ padding: '10px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
-                {error}
+              <div style={{ padding: '12px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
+                <span>{error}</span>
               </div>
             )}
 
@@ -254,12 +343,12 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                 <input
                   id="forgot-email"
                   type="email"
-                  placeholder="analyst@tradingco.com"
+                  placeholder="farmer@agricast.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   style={inputStyle}
                   onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
                   required
                 />
               </div>
@@ -267,10 +356,10 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
               <button
                 type="submit"
                 className="btn btn-primary"
-                style={{ width: '100%', height: '40px', justifyContent: 'center' }}
+                style={{ width: '100%', minHeight: '48px', fontSize: '15px', fontWeight: 700, justifyContent: 'center' }}
                 disabled={loading}
               >
-                {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : 'Send Reset Code'}
+                {loading ? <div className="spinner" style={{ width: '18px', height: '18px' }} /> : 'Send Reset Code'}
               </button>
             </form>
           </>
@@ -279,34 +368,51 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
         {/* ── Reset Password View (OTP + New Password) ── */}
         {view === 'reset' && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
               <button
+                type="button"
                 onClick={() => switchView('forgot')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', color: 'var(--clr-on-surface-variant)', marginLeft: '-8px', display: 'flex' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  borderRadius: '50%',
+                  color: 'var(--clr-on-surface-variant)',
+                  marginLeft: '-12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
                 aria-label="Back"
               >
                 <span className="material-symbols-outlined">arrow_back</span>
               </button>
-              <h2 style={{ marginLeft: '8px', fontSize: '24px', fontWeight: 600 }}>Set New Password</h2>
+              <h2 style={{ marginLeft: '4px', fontSize: '22px', fontWeight: 700, color: 'var(--clr-on-surface)' }}>Set New Password</h2>
             </div>
-            <p style={{ fontSize: '14px', marginBottom: '20px', color: 'var(--clr-on-surface-variant)' }}>
-              Enter the 6-digit code sent to <strong>{email}</strong> and your new password.
+            <p style={{ fontSize: '13px', marginBottom: '16px', color: 'var(--clr-on-surface-variant)' }}>
+              Enter the code sent to <strong>{email}</strong> and choose your new password.
             </p>
 
             {error && (
-              <div style={{ padding: '10px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
-                {error}
+              <div style={{ padding: '12px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
+                <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label htmlFor="reset-otp-input" style={labelStyle}>6-Digit OTP Code</label>
+                <label htmlFor="reset-otp-input" style={labelStyle}>6-Digit Verification Code</label>
                 <input
                   id="reset-otp-input"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength="6"
-                  placeholder="––––––"
+                  placeholder="• • • • • •"
                   value={otpCode}
                   onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                   style={{
@@ -315,40 +421,68 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                     fontSize: '20px',
                     letterSpacing: '8px',
                     fontFamily: 'var(--font-mono)',
-                    padding: '8px',
+                    fontWeight: 700
                   }}
                   onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
                   required
                 />
               </div>
 
               <div>
                 <label htmlFor="reset-password-input" style={labelStyle}>New Password</label>
-                <input
-                  id="reset-password-input"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
-                  required
-                />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    id="reset-password-input"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    style={{ ...inputStyle, paddingRight: '48px' }}
+                    onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
+                    onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '4px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      minWidth: '40px',
+                      minHeight: '40px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--clr-outline)',
+                      borderRadius: '50%'
+                    }}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                      {showPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Password Strength Indicators */}
               {password.length > 0 && (
                 <div style={{
-                  background: 'var(--clr-surface-container)',
-                  borderRadius: '8px',
+                  background: 'var(--clr-surface-container-low)',
+                  borderRadius: '10px',
                   padding: '12px 14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px',
+                  border: '1px solid var(--clr-outline-variant)'
                 }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
                     Password Requirements
                   </span>
                   {passwordChecks.map(check => (
@@ -358,13 +492,13 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                         display: 'flex', alignItems: 'center', gap: '8px',
                         fontSize: '13px',
                         color: check.passed ? 'var(--clr-primary)' : 'var(--clr-on-surface-variant)',
-                        fontWeight: check.passed ? 500 : 400,
+                        fontWeight: check.passed ? 600 : 400,
                         transition: 'color 0.2s',
                       }}
                     >
                       <span className="material-symbols-outlined" style={{
                         fontSize: '16px',
-                        color: check.passed ? '#4caf50' : 'var(--clr-outline)',
+                        color: check.passed ? '#2e7d32' : 'var(--clr-outline)',
                         transition: 'color 0.2s, transform 0.2s',
                         transform: check.passed ? 'scale(1.1)' : 'scale(1)',
                       }}>
@@ -386,16 +520,16 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                         height: '100%',
                         borderRadius: '2px',
                         width: `${(passwordChecks.filter(c => c.passed).length / PASSWORD_RULES.length) * 100}%`,
-                        background: allPasswordRulesPassed ? '#4caf50' :
+                        background: allPasswordRulesPassed ? '#2e7d32' :
                                     passwordChecks.filter(c => c.passed).length >= 2 ? '#ff9800' : 'var(--clr-error)',
                         transition: 'width 0.3s ease, background 0.3s ease',
                       }} />
                     </div>
                     <div style={{
                       fontSize: '11px', marginTop: '4px', textAlign: 'right',
-                      color: allPasswordRulesPassed ? '#4caf50' :
+                      color: allPasswordRulesPassed ? '#2e7d32' :
                              passwordChecks.filter(c => c.passed).length >= 2 ? '#ff9800' : 'var(--clr-error)',
-                      fontWeight: 600,
+                      fontWeight: 700,
                     }}>
                       {allPasswordRulesPassed ? 'Strong' :
                        passwordChecks.filter(c => c.passed).length >= 2 ? 'Medium' : 'Weak'}
@@ -407,10 +541,10 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
               <button
                 type="submit"
                 className="btn btn-primary"
-                style={{ width: '100%', height: '40px', marginTop: '4px', justifyContent: 'center' }}
+                style={{ width: '100%', minHeight: '48px', fontSize: '15px', fontWeight: 700, marginTop: '4px', justifyContent: 'center' }}
                 disabled={loading || (password.length > 0 && !allPasswordRulesPassed)}
               >
-                {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }} /> : 'Reset Password'}
+                {loading ? <div className="spinner" style={{ width: '18px', height: '18px' }} /> : 'Reset Password'}
               </button>
             </form>
           </>
@@ -419,50 +553,52 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
         {/* ── Login / Sign Up Tab Switcher Views ── */}
         {(view === 'login' || view === 'signup') && (
           <>
-            {/* Tab toggle */}
+            {/* High Contrast Mobile Segmented Tab Switcher */}
             <div style={{ 
               display: 'flex', 
               gap: '4px', 
-              marginBottom: '24px', 
-              background: 'rgba(1, 45, 29, 0.05)', 
+              marginBottom: '20px', 
+              background: 'var(--clr-surface-container-low)', 
               padding: '4px', 
-              borderRadius: '8px',
-              border: '1px solid rgba(1, 45, 29, 0.08)'
+              borderRadius: '12px',
+              border: '1px solid var(--clr-outline-variant)'
             }}>
               {['login', 'signup'].map(v => (
                 <button
                   key={v}
+                  type="button"
                   onClick={() => switchView(v)}
                   style={{
                     flex: 1,
-                    padding: '8px 12px',
+                    minHeight: '44px',
                     border: 'none',
-                    borderRadius: '6px',
-                    background: view === v ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+                    borderRadius: '8px',
+                    background: view === v ? 'var(--clr-surface-container-lowest)' : 'transparent',
                     color: view === v ? 'var(--clr-primary)' : 'var(--clr-on-surface-variant)',
                     fontWeight: view === v ? 700 : 500,
-                    fontSize: '13px',
+                    fontSize: '14px',
                     cursor: 'pointer',
-                    boxShadow: view === v ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                    boxShadow: view === v ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
                     fontFamily: 'var(--font-sans)',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
-                  {v === 'login' ? 'Sign In' : 'Sign Up'}
+                  {v === 'login' ? 'Sign In' : 'Create Account'}
                 </button>
               ))}
             </div>
 
-            <h2 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '4px' }}>
-              {view === 'login' ? 'Sign In' : 'Create Account'}
+            <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '4px', color: 'var(--clr-on-surface)' }}>
+              {view === 'login' ? 'Welcome Back' : 'Join AgriCast AI'}
             </h2>
-            <p style={{ fontSize: '14px', marginBottom: '24px' }}>
-              {view === 'login' ? 'Access B2B pricing forecasts' : 'Register for predictive intelligence'}
+            <p style={{ fontSize: '13px', marginBottom: '20px', color: 'var(--clr-on-surface-variant)', lineHeight: 1.4 }}>
+              {view === 'login' ? 'Access real-time Mandi forecasts & crop telemetry' : 'Register for predictive agricultural intelligence'}
             </p>
 
             {error && (
-              <div style={{ padding: '10px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
-                {error}
+              <div style={{ padding: '12px 14px', background: 'var(--clr-error-container)', color: 'var(--clr-on-error-container)', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
+                <span>{error}</span>
               </div>
             )}
 
@@ -476,31 +612,33 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                   <input
                     id="signup-name"
                     type="text"
-                    placeholder="Dhruvil Thummar"
+                    placeholder="e.g. Ramesh Patel"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                    onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
               )}
+
               <div>
-                <label htmlFor={`${view}-email`} style={labelStyle}>Email</label>
+                <label htmlFor={`${view}-email`} style={labelStyle}>Email Address</label>
                 <input
                   id={`${view}-email`}
                   type="email"
-                  placeholder="analyst@tradingco.com"
+                  placeholder="farmer@agricast.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   style={inputStyle}
                   onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
+                  onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
                   required
                 />
               </div>
+
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label htmlFor={`${view}-password`} style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
                   {view === 'login' && (
                     <button
@@ -511,9 +649,9 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                         border: 'none',
                         color: 'var(--clr-primary)',
                         fontSize: '12px',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         cursor: 'pointer',
-                        padding: 0,
+                        padding: '4px',
                         fontFamily: 'var(--font-sans)',
                       }}
                     >
@@ -521,31 +659,60 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                     </button>
                   )}
                 </div>
-                <input
-                  id={`${view}-password`}
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
-                  onBlur={e  => { e.target.style.borderColor = 'var(--clr-outline-variant)'; e.target.style.boxShadow = 'none'; }}
-                  required
-                />
+
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    id={`${view}-password`}
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    style={{ ...inputStyle, paddingRight: '48px' }}
+                    onFocus={e => { e.target.style.borderColor = 'var(--clr-primary)'; e.target.style.boxShadow = `0 0 0 2px var(--clr-tertiary-fixed-dim)`; }}
+                    onBlur={e  => { e.target.style.borderColor = 'rgba(1, 45, 29, 0.2)'; e.target.style.boxShadow = 'none'; }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '4px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      minWidth: '40px',
+                      minHeight: '40px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--clr-outline)',
+                      borderRadius: '50%'
+                    }}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                      {showPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
-              {/* ── Password Strength Validation Indicators (Sign Up only) ── */}
+              {/* Password Strength Indicators (Sign Up only) */}
               {view === 'signup' && password.length > 0 && (
                 <div style={{
-                  background: 'var(--clr-surface-container)',
-                  borderRadius: '8px',
+                  background: 'var(--clr-surface-container-low)',
+                  borderRadius: '10px',
                   padding: '12px 14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '6px',
+                  border: '1px solid var(--clr-outline-variant)'
                 }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
-                    Password Requirements
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--clr-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
+                    Password Security Level
                   </span>
                   {passwordChecks.map(check => (
                     <div
@@ -554,13 +721,13 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                         display: 'flex', alignItems: 'center', gap: '8px',
                         fontSize: '13px',
                         color: check.passed ? 'var(--clr-primary)' : 'var(--clr-on-surface-variant)',
-                        fontWeight: check.passed ? 500 : 400,
+                        fontWeight: check.passed ? 600 : 400,
                         transition: 'color 0.2s',
                       }}
                     >
                       <span className="material-symbols-outlined" style={{
                         fontSize: '16px',
-                        color: check.passed ? '#4caf50' : 'var(--clr-outline)',
+                        color: check.passed ? '#2e7d32' : 'var(--clr-outline)',
                         transition: 'color 0.2s, transform 0.2s',
                         transform: check.passed ? 'scale(1.1)' : 'scale(1)',
                       }}>
@@ -570,7 +737,6 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                     </div>
                   ))}
 
-                  {/* Password Strength Bar */}
                   <div style={{ marginTop: '4px' }}>
                     <div style={{
                       height: '4px',
@@ -582,19 +748,19 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
                         height: '100%',
                         borderRadius: '2px',
                         width: `${(passwordChecks.filter(c => c.passed).length / PASSWORD_RULES.length) * 100}%`,
-                        background: allPasswordRulesPassed ? '#4caf50' :
+                        background: allPasswordRulesPassed ? '#2e7d32' :
                                     passwordChecks.filter(c => c.passed).length >= 2 ? '#ff9800' : 'var(--clr-error)',
                         transition: 'width 0.3s ease, background 0.3s ease',
                       }} />
                     </div>
                     <div style={{
                       fontSize: '11px', marginTop: '4px', textAlign: 'right',
-                      color: allPasswordRulesPassed ? '#4caf50' :
+                      color: allPasswordRulesPassed ? '#2e7d32' :
                              passwordChecks.filter(c => c.passed).length >= 2 ? '#ff9800' : 'var(--clr-error)',
-                      fontWeight: 600,
+                      fontWeight: 700,
                     }}>
-                      {allPasswordRulesPassed ? 'Strong' :
-                       passwordChecks.filter(c => c.passed).length >= 2 ? 'Medium' : 'Weak'}
+                      {allPasswordRulesPassed ? 'Strong Password' :
+                       passwordChecks.filter(c => c.passed).length >= 2 ? 'Medium Strength' : 'Weak Password'}
                     </div>
                   </div>
                 </div>
@@ -603,13 +769,23 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
               <button
                 type="submit"
                 className="btn btn-primary"
-                style={{ width: '100%', height: '40px', marginTop: '4px', justifyContent: 'center' }}
+                style={{
+                  width: '100%',
+                  minHeight: '48px',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  marginTop: '8px',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(1, 45, 29, 0.25)'
+                }}
                 disabled={loading || (view === 'signup' && password.length > 0 && !allPasswordRulesPassed)}
               >
-                {loading
-                  ? <div className="spinner" style={{ width: '16px', height: '16px' }} />
-                  : view === 'login' ? 'Continue' : 'Sign Up'
-                }
+                {loading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="spinner" style={{ width: '18px', height: '18px' }} />
+                    <span>Connecting...</span>
+                  </div>
+                ) : view === 'login' ? 'Sign In to AgriCast' : 'Create Account'}
               </button>
             </form>
           </>
@@ -618,3 +794,4 @@ export default function AuthModal({ onClose, onAuthSuccess, showToast }) {
     </div>
   );
 }
+
