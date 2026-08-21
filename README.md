@@ -14,6 +14,12 @@
 
 ---
 
+## ⚡ Feel the live demo here!
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-AgriCast_AI-059669?style=for-the-badge&logo=vercel&logoColor=white)](https://agricastai.vercel.app/)
+
+---
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
